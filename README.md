@@ -9,7 +9,7 @@ environments that do not have DPMI built-in.
 
 This package is still in a very primordial state. It is a minimal demonstration
 of how to create a simple DOS program with Zig. Only basic file and terminal
-input/output are working and proper error handling is non-existant. It will
+input/output are working and proper error handling is missing. It will
 require hacking if you wish to adapt it for your own needs.
 
 ## Quick Start
