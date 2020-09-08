@@ -7,10 +7,10 @@ resident [DPMI host](https://wikipedia.org/wiki/DOS_Protected_Mode_Interface).
 [CWSDPMI](https://sandmann.dotster.com/cwsdpmi) is recommended for
 environments that do not have DPMI built-in.
 
-This package is still in a very primordial state. It is a minimal demonstration
-of how to create a simple DOS program with Zig. Only basic file and terminal
-input/output are working and proper error handling is missing. It will
-require hacking if you wish to adapt it for your own needs.
+This package is in a primordial state. It is a minimal demonstration of how to
+create a simple DOS program with Zig. Only basic file/terminal input/output are
+working, and does not include proper error handling. It will require hacking if
+you wish to adapt it for your own needs.
 
 ## Quick Start
 
@@ -36,10 +36,10 @@ There are four main components of this package:
 - [DPMI API](http://www.delorie.com/djgpp/doc/dpmi) wrappers are used to enter
   protected mode and manage memory.
 - An [ELF](https://wikipedia.org/wiki/Executable_and_Linkable_Format) loader
-  program is a [MZ executable](https://wikipedia.org/wiki/DOS_MZ_executable)
+  program is an [MZ executable](https://wikipedia.org/wiki/DOS_MZ_executable)
   (accomplished with a linker script) that can load and run an ELF file. It is
-  currently a standalone program, but eventually it will act as a stub that can
-  be prepended to an ELF file.
+  currently a standalone file, but will eventually act as a stub that can be
+  prepended to an ELF file.
 - The demo program is an ELF that exercises all of the above.
 
 ## Roadmap
@@ -66,13 +66,13 @@ In the meantime, try using [DOSBox-X](https://dosbox-x.com).
 
 ### Can I just target 16-bit real mode rather than require DPMI?
 
-It is possible, but it is a non-goal for this package. Zig (via LLVM) can
+It is technically possible, but not a goal of this package. Zig (via LLVM) can
 generate "16-bit" code using the `code16` ABI target. In reality, this code is
-often 32-bit instructions with a bunch of added prefixes that allow them to
-work when the processor is in a 16-bit compatibility mode. Using `code16`
-actually produces *larger* binaries. Additionally, the oldest CPU that can be
-targeted is an Intel 80386, which supports 32-bit protected mode. It's
-guaranteed to be there and has a lot of advantages, so might as well use it.
+often 32-bit instructions with added prefixes that override the address or
+operand size. Using `code16` actually produces *larger* binaries. Additionally,
+the oldest CPU that can be targeted is an Intel 80386, which supports 32-bit
+protected mode. It's guaranteed to be there and has a lot of advantages, so we
+might as well use it.
 
 ### Why not piggyback off an existing DOS toolchain like DJGPP?
 
