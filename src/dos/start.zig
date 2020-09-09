@@ -18,7 +18,6 @@ fn _start() callconv(.Naked) noreturn {
             : [seg] "=r" (-> u16)
         );
         dpmi.enterProtectedMode() catch |err| {
-            // FIXME: This code path blows up in DOSBox-X.
             const msg = switch (err) {
                 error.NoDpmi => "No DPMI detected.",
                 error.No32BitSupport => "DPMI does not support 32-bit programs.",

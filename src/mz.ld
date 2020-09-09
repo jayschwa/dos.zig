@@ -62,6 +62,7 @@ SECTIONS {
         *(.bss*)
         _bss_end = ABSOLUTE(.);
         . += _stack_size;
+        . = ALIGN(paragraph);
     }
 
     stack_ptr = ABSOLUTE(.);
