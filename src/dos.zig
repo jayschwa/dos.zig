@@ -23,23 +23,3 @@ pub fn openFile(path: [*:0]const u8) !File {
     const fd = try os.system.open(path, .ReadOnly);
     return File{ .handle = fd };
 }
-
-const Version = struct {
-    major: u8,
-    minor: u8,
-};
-
-pub fn version() Version {
-    var major: u8 = undefined;
-    var minor: u8 = undefined;
-    asm volatile ("int $0x21"
-        : [major] "={al}" (major),
-          [minor] "={ah}" (minor)
-        : [func] "{ah}" (@as(u8, 0x30))
-        : "bl", "bh", "cx"
-    );
-    return Version{
-        .major = major,
-        .minor = minor,
-    };
-}

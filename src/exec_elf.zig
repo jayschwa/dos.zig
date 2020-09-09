@@ -2,11 +2,9 @@ const std = @import("std");
 const elf = std.elf;
 const math = std.math;
 const mem = std.mem;
-const print = std.debug.print;
 
 pub usingnamespace @import("dos.zig");
 pub usingnamespace @import("dos/dpmi.zig");
-const real_mode = @import("dos/real_mode.zig");
 
 pub fn main() !void {
     const loaded_elf = try loadElf("demo");
