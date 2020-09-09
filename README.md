@@ -21,8 +21,8 @@ Install:
 
 Run:
 
-```
-zig build
+``` sh
+zig build &&
 dosbox-x -c 'cwsdpmi.exe -p' -c 'mount c zig-cache/bin' -c 'c:' -c 'execelf.exe'
 ```
 
