@@ -101,8 +101,6 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
     return actual_read_len;
 }
 
-var errno: u16 = 0;
-
 pub fn write(handle: fd_t, buf: [*]const u8, count: usize) u16 {
     const ptr = copyToRealModeBuffer(buf[0..count]);
     const len = if (in_dos_mem) count else std.math.min(count, transfer_buffer.?.len);
@@ -138,7 +136,7 @@ pub fn pread(handle: fd_t, buf: [*]u8, count: usize, offset: u64) u16 {
 
 pub fn getErrno(rc: anytype) u16 {
     // TODO: Return error code from DOS int 0x21 calls.
-    return errno;
+    return 0;
 }
 
 pub fn sched_yield() void {
