@@ -1,8 +1,7 @@
 const std = @import("std");
 const panic = std.debug.panic;
 
-// TODO: Use unions for easier byte access.
-pub const RealModeRegisters = packed struct {
+pub const RealModeRegisters = extern struct {
     edi: u32 = undefined,
     esi: u32 = undefined,
     ebp: u32 = undefined,
@@ -20,6 +19,10 @@ pub const RealModeRegisters = packed struct {
     cs: u16 = undefined,
     sp: u16 = 0,
     ss: u16 = 0,
+
+    pub fn ax(regs: RealModeRegisters) u16 {
+        return @truncate(u16, regs.eax);
+    }
 };
 
 pub fn simulateInterrupt(interrupt: u8, stack_words: u16, registers: RealModeRegisters) !RealModeRegisters {

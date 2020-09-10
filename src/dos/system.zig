@@ -63,7 +63,7 @@ pub fn open(file_path: [*:0]const u8, mode: OpenAccessMode) !fd_t {
         .ds = ptr.segment,
     });
     // TODO: Check for error in carry flag.
-    return @truncate(fd_t, regs.eax);
+    return regs.ax();
 }
 
 pub fn close(handle: fd_t) !void {
@@ -96,7 +96,7 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
         .ds = ptr.segment,
     });
     // TODO: Check for error in carry flag.
-    const actual_read_len = @truncate(u16, regs.eax);
+    const actual_read_len = regs.ax();
     if (!in_dos_mem) transfer_buffer.?.protected_mode_segment.readFrom(buf[0..actual_read_len], 0);
     return actual_read_len;
 }
@@ -112,7 +112,7 @@ pub fn write(handle: fd_t, buf: [*]const u8, count: usize) u16 {
         .ds = ptr.segment,
     });
     // TODO: Check for error in carry flag.
-    return @truncate(u16, regs.eax);
+    return regs.ax();
 }
 
 pub fn lseek(handle: fd_t, offset: off_t, whence: u8) off_t {
@@ -123,7 +123,7 @@ pub fn lseek(handle: fd_t, offset: off_t, whence: u8) off_t {
         .edx = @intCast(u16, offset),
     });
     // TODO: Check for error in carry flag.
-    return @intCast(off_t, (regs.edx << 16) | (regs.eax & 0xFFFF));
+    return @intCast(off_t, (regs.edx << 16) | regs.ax());
 }
 
 pub fn pread(handle: fd_t, buf: [*]u8, count: usize, offset: u64) u16 {
