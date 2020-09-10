@@ -53,7 +53,7 @@ const OpenAccessMode = enum(u8) {
     ReadWrite = 2,
 };
 
-pub fn open(file_path: [*:0]const u8, mode: OpenAccessMode) !fd_t {
+pub fn open(file_path: [*:0]const u8, mode: OpenAccessMode) fd_t {
     const len = std.mem.len(file_path) + 1;
     // TODO: Fail if len exceeds transfer buffer size.
     const ptr = copyToRealModeBuffer(file_path[0..len]);
@@ -66,7 +66,7 @@ pub fn open(file_path: [*:0]const u8, mode: OpenAccessMode) !fd_t {
     return regs.ax();
 }
 
-pub fn close(handle: fd_t) !void {
+pub fn close(handle: fd_t) void {
     const regs = int21(.{
         .eax = 0x3e00,
         .ebx = handle,
