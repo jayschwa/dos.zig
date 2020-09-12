@@ -2,9 +2,15 @@ pub const fd_t = u16;
 pub const mode_t = u8;
 pub const off_t = i32;
 
+pub const PATH_MAX = 260;
+
 pub const STDIN_FILENO = 0;
 pub const STDOUT_FILENO = 1;
 pub const STDERR_FILENO = 2;
+
+pub const O_RDONLY = 0;
+pub const O_WRONLY = 1;
+pub const O_RDWR = 2;
 
 pub const SEEK_SET = 0;
 pub const SEEK_CUR = 1;

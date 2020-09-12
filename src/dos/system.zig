@@ -47,18 +47,13 @@ pub fn exit(status: u8) noreturn {
     unreachable;
 }
 
-const OpenAccessMode = enum(u8) {
-    ReadOnly = 0,
-    WriteOnly = 1,
-    ReadWrite = 2,
-};
-
-pub fn open(file_path: [*:0]const u8, mode: OpenAccessMode) fd_t {
+pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) fd_t {
+    // TODO: Can mode be reasonably mapped onto DOS 3.1 sharing mode bits?
     const len = std.mem.len(file_path) + 1;
     // TODO: Fail if len exceeds transfer buffer size.
     const ptr = copyToRealModeBuffer(file_path[0..len]);
     const regs = int21(.{
-        .eax = @as(u16, 0x3d00) | @enumToInt(mode),
+        .eax = 0x3d00 | (flags & 3),
         .edx = ptr.offset,
         .ds = ptr.segment,
     });

@@ -35,7 +35,7 @@ const LoadedElf = struct {
     stack_addr: usize,
 };
 
-pub fn loadElf(path: [*:0]const u8) !LoadedElf {
+pub fn loadElf(path: []const u8) !LoadedElf {
     const elf_file = try openFile(path);
     defer elf_file.close();
 

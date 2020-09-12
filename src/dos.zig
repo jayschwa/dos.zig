@@ -19,7 +19,7 @@ pub fn panic(msg: []const u8, _: ?*std.builtin.StackTrace) noreturn {
 }
 
 // TODO: Integrate with standard library fs module.
-pub fn openFile(path: [*:0]const u8) !File {
-    const fd = os.system.open(path, .ReadOnly);
+pub fn openFile(path: []const u8) !File {
+    const fd = try std.os.open(path, std.os.O_RDONLY, 0);
     return File{ .handle = fd };
 }
