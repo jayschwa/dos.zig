@@ -49,6 +49,7 @@ pub fn exit(status: u8) noreturn {
 
 pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) fd_t {
     // TODO: Can mode be reasonably mapped onto DOS 3.1 sharing mode bits?
+    // TODO: Use long filename open (int 0x21, ax=0x716c) if it's available.
     const len = std.mem.len(file_path) + 1;
     // TODO: Fail if len exceeds transfer buffer size.
     const ptr = copyToRealModeBuffer(file_path[0..len]);
