@@ -13,11 +13,6 @@ comptime {
     _ = @import("dos/start.zig");
 }
 
-pub fn panic(msg: []const u8, _: ?*std.builtin.StackTrace) noreturn {
-    std.debug.print("panic: {}\r\n", .{msg});
-    std.os.abort();
-}
-
 // TODO: Integrate with standard library fs module.
 pub fn openFile(path: []const u8) !File {
     const fd = try std.os.open(path, std.os.O_RDONLY, 0);
