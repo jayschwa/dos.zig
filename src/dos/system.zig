@@ -9,10 +9,9 @@ const start = @import("start.zig");
 const in_dos_mem = std.builtin.abi == .code16;
 
 fn int21(registers: dpmi.RealModeRegisters) dpmi.RealModeRegisters {
-    return dpmi.simulateInterrupt(0x21, 0, registers) catch |err| {
-        // All errors are stack-related and thus unexpected.
-        panic(@src().fn_name ++ " failed with unexpected error: {}", .{@errorName(err)});
-    };
+    var regs = registers;
+    dpmi.simulateInterrupt(0x21, &regs);
+    return regs;
 }
 
 var transfer_buffer: ?dpmi.DosMemBlock = null;

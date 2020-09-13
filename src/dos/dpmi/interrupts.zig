@@ -25,7 +25,14 @@ pub const RealModeRegisters = extern struct {
     }
 };
 
-pub fn simulateInterrupt(interrupt: u8, stack_words: u16, registers: RealModeRegisters) !RealModeRegisters {
+pub fn simulateInterrupt(interrupt: u8, registers: *RealModeRegisters) void {
+    simulateInterruptWithStack(0x21, registers, 0) catch |err| {
+        // All errors are stack-related and thus unexpected.
+        panic(@src().fn_name ++ " failed with unexpected error: {}", .{@errorName(err)});
+    };
+}
+
+pub fn simulateInterruptWithStack(interrupt: u8, registers: *RealModeRegisters, stack_words: u16) !void {
     var errno: u16 = undefined;
     const flags = asm volatile (
         \\ int $0x31
@@ -36,7 +43,7 @@ pub fn simulateInterrupt(interrupt: u8, stack_words: u16, registers: RealModeReg
         : [_] "{ax}" (@as(u16, 0x300)),
           [_] "{bx}" (interrupt),
           [_] "{cx}" (stack_words),
-          [_] "{edi}" (&registers)
+          [_] "{edi}" (registers)
         : "cc", "memory"
     );
     if (flags & 1 != 0)
@@ -45,7 +52,6 @@ pub fn simulateInterrupt(interrupt: u8, stack_words: u16, registers: RealModeReg
             0x8013 => error.PhysicalMemoryUnavailable,
             0x8014 => error.BackingStoreUnavailable,
             0x8021 => error.StackTooLarge,
-            else => panic(@src().fn_name ++ " failed with unknown error code: {x}", .{errno}),
+            else => panic(@src().fn_name ++ " failed with unexpected error code: {x}", .{errno}),
         };
-    return registers;
 }
