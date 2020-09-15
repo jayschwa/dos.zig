@@ -8,8 +8,8 @@ const start = @import("start.zig");
 
 const in_dos_mem = std.builtin.abi == .code16;
 
-/// Error code of the last DOS system call, if any.
-pub threadlocal var error_code: ?u16 = null;
+/// Error code of the last DOS system call.
+pub threadlocal var error_code: u16 = 0;
 
 fn int21(registers: dpmi.RealModeRegisters) dpmi.RealModeRegisters {
     var regs = registers;
@@ -17,16 +17,16 @@ fn int21(registers: dpmi.RealModeRegisters) dpmi.RealModeRegisters {
     error_code = if (regs.flags & 1 != 0)
         int21(.{ .eax = 0x5900, .ebx = 0 }).ax() // Extended error code.
     else
-        null;
+        0;
     return regs;
 }
 
 pub fn getErrno(rc: anytype) u16 {
-    if (error_code == null) return 0;
-    return switch (error_code.?) {
+    return switch (error_code) {
         // TODO: Map known DOS error codes to C-style error codes.
+        0 => 0,
         2 => ENOENT,
-        else => panic("Unmapped DOS error code: {}", .{error_code.?}),
+        else => panic("Unmapped DOS error code: {}", .{error_code}),
     };
 }
 
@@ -105,7 +105,7 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
         .ds = ptr.segment,
     });
     const actual_read_len = regs.ax();
-    if (!in_dos_mem and error_code == null)
+    if (!in_dos_mem and error_code == 0)
         transfer_buffer.?.protected_mode_segment.readFrom(buf[0..actual_read_len], 0);
     return actual_read_len;
 }
