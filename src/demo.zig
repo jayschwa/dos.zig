@@ -1,5 +1,5 @@
 const std = @import("std");
-pub usingnamespace @import("dos.zig");
+pub usingnamespace @import("dos");
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();

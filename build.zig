@@ -33,6 +33,7 @@ pub fn build(b: *Builder) !void {
 }
 
 fn setup(obj: *LibExeObjStep) *LibExeObjStep {
+    obj.addPackagePath("dos", "src/dos.zig");
     obj.setBuildMode(.ReleaseSafe);
     obj.disable_stack_probing = true;
     obj.single_threaded = true;

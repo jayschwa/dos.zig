@@ -3,8 +3,7 @@ const elf = std.elf;
 const math = std.math;
 const mem = std.mem;
 
-pub usingnamespace @import("dos.zig");
-pub usingnamespace @import("dos/dpmi.zig");
+pub usingnamespace @import("dos");
 
 pub fn main() !void {
     const loaded_elf = try loadElf("demo");
@@ -29,8 +28,8 @@ pub fn main() !void {
 }
 
 const LoadedElf = struct {
-    code_segment: Segment,
-    data_segment: Segment,
+    code_segment: dpmi.Segment,
+    data_segment: dpmi.Segment,
     entry_addr: usize,
     stack_addr: usize,
 };
@@ -67,10 +66,10 @@ pub fn loadElf(path: []const u8) !LoadedElf {
 
     // Include stack size in memory requirements and round up to nearest page.
     // TODO: Make room for a stack guard page.
-    mem_needed = mem.alignForward(mem_needed + stack_size, getPageSize());
+    mem_needed = mem.alignForward(mem_needed + stack_size, dpmi.getPageSize());
 
     // Allocate extended memory for program.
-    const mem_block = try ExtMemBlock.alloc(mem_needed);
+    const mem_block = try dpmi.ExtMemBlock.alloc(mem_needed);
     // TODO: errdefer free block.
 
     // TODO: Set tighter limit on code segment.

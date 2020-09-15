@@ -1,6 +1,8 @@
 const std = @import("std");
 const File = std.fs.File;
 
+pub const dpmi = @import("dos/dpmi.zig");
+
 // This implements standard library operating system abstractions.
 pub const os = struct {
     pub const bits = @import("dos/bits.zig");
