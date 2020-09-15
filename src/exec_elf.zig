@@ -3,7 +3,10 @@ const elf = std.elf;
 const math = std.math;
 const mem = std.mem;
 
-pub usingnamespace @import("dos");
+const dos = @import("dos");
+const dpmi = dos.dpmi;
+
+pub const os = dos;
 
 pub fn main() !void {
     const loaded_elf = try loadElf("demo");
@@ -35,7 +38,7 @@ const LoadedElf = struct {
 };
 
 pub fn loadElf(path: []const u8) !LoadedElf {
-    const elf_file = try openFile(path);
+    const elf_file = try dos.openFile(path);
     defer elf_file.close();
 
     // Parse ELF header and enforce constraints.

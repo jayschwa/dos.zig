@@ -1,5 +1,6 @@
 const std = @import("std");
-pub usingnamespace @import("dos");
+
+pub const os = @import("dos");
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();

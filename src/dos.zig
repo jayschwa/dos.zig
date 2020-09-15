@@ -3,11 +3,9 @@ const File = std.fs.File;
 
 pub const dpmi = @import("dos/dpmi.zig");
 
-// This implements standard library operating system abstractions.
-pub const os = struct {
-    pub const bits = @import("dos/bits.zig");
-    pub const system = @import("dos/system.zig");
-};
+// These implement standard library operating system interfaces.
+pub const bits = @import("dos/bits.zig");
+pub const system = @import("dos/system.zig");
 
 // This forces the start.zig file to be imported, and the comptime logic inside that
 // file decides whether to export any appropriate start symbols.
