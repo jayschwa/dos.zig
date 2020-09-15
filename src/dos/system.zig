@@ -14,8 +14,10 @@ pub threadlocal var error_code: ?u16 = null;
 fn int21(registers: dpmi.RealModeRegisters) dpmi.RealModeRegisters {
     var regs = registers;
     dpmi.simulateInterrupt(0x21, &regs);
-    // TODO: Get extended error code (int 0x21, ah=0x59).
-    error_code = if (regs.flags & 1 == 0) null else regs.ax();
+    error_code = if (regs.flags & 1 != 0)
+        int21(.{ .eax = 0x5900, .ebx = 0 }).ax() // Extended error code.
+    else
+        null;
     return regs;
 }
 
