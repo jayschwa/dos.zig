@@ -3,7 +3,7 @@ const panic = std.debug.panic;
 
 usingnamespace @import("bits.zig");
 const dpmi = @import("dpmi.zig");
-const FarPtr = @import("real_mode.zig").FarPtr;
+const FarPtr = @import("far_ptr.zig").FarPtr;
 const start = @import("start.zig");
 
 const in_dos_mem = std.builtin.abi == .code16;
@@ -39,12 +39,11 @@ pub fn initTransferBuffer() !void {
 pub fn copyToRealModeBuffer(bytes: []const u8) FarPtr {
     if (in_dos_mem)
         return FarPtr{
-            .offset = @intCast(u16, @ptrToInt(bytes.ptr)),
             .segment = start.ds.?,
+            .offset = @intCast(u16, @ptrToInt(bytes.ptr)),
         };
-    transfer_buffer.?.protected_mode_segment.writeAt(bytes, 0);
+    transfer_buffer.?.protected_mode_segment.farPtr().write(bytes);
     return FarPtr{
-        .offset = 0,
         .segment = transfer_buffer.?.real_mode_segment,
     };
 }
@@ -87,12 +86,11 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
     // TODO: Cleanup ugly code.
     const ptr = if (in_dos_mem)
         FarPtr{
-            .offset = @intCast(u16, @ptrToInt(buf)),
             .segment = start.ds.?,
+            .offset = @intCast(u16, @ptrToInt(buf)),
         }
     else
         FarPtr{
-            .offset = 0,
             .segment = transfer_buffer.?.real_mode_segment,
         };
     const len = if (in_dos_mem) count else std.math.min(count, transfer_buffer.?.len);
@@ -106,7 +104,7 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
     });
     const actual_read_len = regs.ax();
     if (!in_dos_mem and error_code == 0)
-        transfer_buffer.?.protected_mode_segment.readFrom(buf[0..actual_read_len], 0);
+        transfer_buffer.?.protected_mode_segment.farPtr().read(buf[0..actual_read_len]);
     return actual_read_len;
 }
 

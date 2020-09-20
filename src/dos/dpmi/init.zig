@@ -1,5 +1,4 @@
 const real_mode = @import("../real_mode.zig");
-const FarPtr = real_mode.FarPtr;
 
 pub fn enterProtectedMode() !void {
     const entry_point = try getEntryPoint();
@@ -10,10 +9,10 @@ pub fn enterProtectedMode() !void {
     }
     const flags = asm volatile (
         \\ mov %[data_segment], %%es
-        \\ lcall *%[func]
+        \\ lcallw *(%[func])
         \\ lahf
         : [_] "={ah}" (-> u8)
-        : [func] "m" (@bitCast(u32, entry_point.function)),
+        : [func] "r" (&entry_point),
           [_] "{ax}" (@as(u16, 1)), // 32-bit
           [data_segment] "m" (data_segment)
         : "cc", "cs", "ds", "es", "ss"
@@ -27,8 +26,9 @@ pub fn enterProtectedMode() !void {
     );
 }
 
-const EntryPoint = struct {
-    function: FarPtr,
+const EntryPoint = packed struct {
+    offset: u16,
+    segment: u16,
     paragraphs_required: u16,
     dpmi_version: Version,
 };
@@ -63,7 +63,8 @@ pub fn getEntryPoint() !EntryPoint {
     if (flags & 1 == 0) return error.No32BitSupport;
 
     return EntryPoint{
-        .function = .{ .offset = offset, .segment = segment },
+        .segment = segment,
+        .offset = offset,
         .paragraphs_required = paragraphs_required,
         .dpmi_version = dpmi_version,
     };

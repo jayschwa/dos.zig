@@ -98,13 +98,13 @@ pub fn loadElf(path: []const u8) !LoadedElf {
             var buffer: [0x4000]u8 = undefined; // 16 KiB
             var read_size = math.min(buffer.len, size_in_elf - copied);
             read_size = try elf_file.pread(buffer[0..read_size], offset_in_elf + copied);
-            data_segment.writeAt(buffer[0..read_size], offset_in_mem + copied);
+            data_segment.farPtr().add(offset_in_mem + copied).write(buffer[0..read_size]);
             copied += read_size;
         }
 
         // Zero out any remaining space.
         if (size_in_mem > size_in_elf) {
-            data_segment.zeroAt(offset_in_mem + size_in_elf, size_in_mem - size_in_elf);
+            data_segment.farPtr().add(offset_in_mem + size_in_elf).fill(0, size_in_mem - size_in_elf);
         }
     }
 

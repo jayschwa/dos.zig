@@ -1,3 +1,5 @@
+const FarPtr = @import("../far_ptr.zig").FarPtr;
+
 pub const Segment = struct {
     selector: u16,
 
@@ -14,6 +16,10 @@ pub const Segment = struct {
               [_] "{cx}" (@as(u16, 1))
         );
         return Segment{ .selector = selector };
+    }
+
+    pub fn farPtr(self: Segment) FarPtr {
+        return .{ .segment = self.selector };
     }
 
     pub fn getBaseAddress(self: Segment) usize {
@@ -65,63 +71,6 @@ pub const Segment = struct {
               [_] "{bx}" (self.selector),
               [_] "{cx}" (@truncate(u16, limit >> 16)),
               [_] "{dx}" (@truncate(u16, limit))
-        );
-    }
-
-    /// Copy bytes from segment starting at offset to buffer.
-    pub fn readFrom(self: Segment, buffer: []u8, offset: usize) void {
-        // TODO: Optimize by copying 32 bits at a time.
-        asm volatile (
-            \\ push %%es
-            \\ push %%ds
-            \\ pop %%es
-            \\ mov %[selector], %%ds
-            \\ cld
-            \\ rep movsb (%%esi), %%es:(%%edi)
-            \\ push %%es
-            \\ pop %%ds
-            \\ pop %%es
-            : // No outputs
-            : [selector] "r" (self.selector),
-              [_] "{ecx}" (buffer.len),
-              [_] "{edi}" (buffer.ptr),
-              [_] "{esi}" (offset)
-            : "cc", "ecx", "edi", "esi", "memory"
-        );
-    }
-
-    /// Copy bytes from buffer to segment starting at offset.
-    pub fn writeAt(self: Segment, bytes: []const u8, offset: usize) void {
-        // TODO: Optimize by copying 32 bits at a time.
-        asm volatile (
-            \\ push %%es
-            \\ mov %[selector], %%es
-            \\ cld
-            \\ rep movsb (%%esi), %%es:(%%edi)
-            \\ pop %%es
-            : // No outputs
-            : [selector] "r" (self.selector),
-              [_] "{ecx}" (bytes.len),
-              [_] "{edi}" (offset),
-              [_] "{esi}" (bytes.ptr)
-            : "cc", "ecx", "edi", "esi", "memory"
-        );
-    }
-
-    pub fn zeroAt(self: Segment, offset: usize, len: usize) void {
-        // TODO: Optimize by writing 32 bits at a time.
-        asm volatile (
-            \\ push %%es
-            \\ mov %[selector], %%es
-            \\ cld
-            \\ rep stosb %%al, %%es:(%%edi)
-            \\ pop %%es
-            : // No outputs
-            : [selector] "r" (self.selector),
-              [_] "{ecx}" (len),
-              [_] "{edi}" (offset),
-              [_] "{al}" (@as(u8, 0))
-            : "cc", "ecx", "edi", "memory"
         );
     }
 };

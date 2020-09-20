@@ -1,11 +1,6 @@
 const std = @import("std");
 const fd_t = std.os.fd_t;
 
-pub const FarPtr = packed struct {
-    offset: u16,
-    segment: u16,
-};
-
 pub fn malloc(paragraphs: u16) !u16 {
     // TODO: Check for error.
     return asm volatile ("int $0x21"
