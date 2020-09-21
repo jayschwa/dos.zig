@@ -1,6 +1,6 @@
-pub const FarPtr = struct {
-    segment: u16,
+pub const FarPtr = packed struct {
     offset: usize = 0,
+    segment: u16,
 
     pub fn add(self: FarPtr, offset: usize) FarPtr {
         return .{
@@ -11,51 +11,44 @@ pub const FarPtr = struct {
 
     pub fn fill(self: FarPtr, value: u8, count: usize) void {
         asm volatile (
-            \\ push %%es
-            \\ mov %[segment], %%es
             \\ cld
+            \\ push %%es
+            \\ lesl (%[far_ptr]), %%edi
             \\ rep stosb %%al, %%es:(%%edi)
             \\ pop %%es
             : // No outputs
-            : [segment] "r" (self.segment),
+            : [far_ptr] "r" (&self),
               [_] "{al}" (value),
-              [_] "{ecx}" (count),
-              [_] "{edi}" (self.offset)
+              [_] "{ecx}" (count)
             : "cc", "ecx", "edi", "memory"
         );
     }
 
     pub fn read(self: FarPtr, buffer: []u8) void {
         asm volatile (
-            \\ push %%es
-            \\ push %%ds
-            \\ pop %%es
-            \\ mov %[segment], %%ds
             \\ cld
-            \\ rep movsb (%%esi), %%es:(%%edi)
-            \\ push %%es
-            \\ pop %%ds
-            \\ pop %%es
+            \\ push %%fs
+            \\ lfsl (%[far_ptr]), %%esi
+            \\ rep movsb %%fs:(%%esi), %%es:(%%edi)
+            \\ pop %%fs
             : // No outputs
-            : [segment] "r" (self.segment),
+            : [far_ptr] "r" (&self),
               [_] "{ecx}" (buffer.len),
-              [_] "{edi}" (buffer.ptr),
-              [_] "{esi}" (self.offset)
+              [_] "{edi}" (buffer.ptr)
             : "cc", "ecx", "edi", "esi", "memory"
         );
     }
 
     pub fn write(self: FarPtr, bytes: []const u8) void {
         asm volatile (
-            \\ push %%es
-            \\ mov %[segment], %%es
             \\ cld
-            \\ rep movsb (%%esi), %%es:(%%edi)
+            \\ push %%es
+            \\ lesl (%[far_ptr]), %%edi
+            \\ rep movsb %%ds:(%%esi), %%es:(%%edi)
             \\ pop %%es
             : // No outputs
-            : [segment] "r" (self.segment),
+            : [far_ptr] "r" (&self),
               [_] "{ecx}" (bytes.len),
-              [_] "{edi}" (self.offset),
               [_] "{esi}" (bytes.ptr)
             : "cc", "ecx", "edi", "esi", "memory"
         );
