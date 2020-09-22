@@ -92,19 +92,21 @@ pub fn loadElf(path: []const u8) !LoadedElf {
         const size_in_elf = @truncate(usize, header.p_filesz);
         const size_in_mem = @truncate(usize, header.p_memsz);
 
+        // Pointer to the the memory segment.
+        var segment = data_segment.farPtr().add(offset_in_mem);
+
         // Copy data from ELF file into memory.
-        var copied: usize = 0;
-        while (copied < size_in_elf) {
+        var bytes_copied: usize = 0;
+        while (bytes_copied < size_in_elf) {
             var buffer: [0x4000]u8 = undefined; // 16 KiB
-            var read_size = math.min(buffer.len, size_in_elf - copied);
-            read_size = try elf_file.pread(buffer[0..read_size], offset_in_elf + copied);
-            data_segment.farPtr().add(offset_in_mem + copied).write(buffer[0..read_size]);
-            copied += read_size;
+            var read_size = math.min(buffer.len, size_in_elf - bytes_copied);
+            read_size = try elf_file.pread(buffer[0..read_size], offset_in_elf + bytes_copied);
+            bytes_copied += segment.writer().write(buffer[0..read_size]) catch unreachable;
         }
 
         // Zero out any remaining space.
-        if (size_in_mem > size_in_elf) {
-            data_segment.farPtr().add(offset_in_mem + size_in_elf).fill(0, size_in_mem - size_in_elf);
+        if (bytes_copied < size_in_mem) {
+            segment.fill(0, size_in_mem - bytes_copied);
         }
     }
 

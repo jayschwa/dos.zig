@@ -42,7 +42,8 @@ pub fn copyToRealModeBuffer(bytes: []const u8) FarPtr {
             .segment = start.ds.?,
             .offset = @intCast(u16, @ptrToInt(bytes.ptr)),
         };
-    transfer_buffer.?.protected_mode_segment.farPtr().write(bytes);
+    var far_ptr = transfer_buffer.?.protected_mode_segment.farPtr();
+    _ = far_ptr.writer().write(bytes) catch unreachable;
     return FarPtr{
         .segment = transfer_buffer.?.real_mode_segment,
     };
@@ -103,8 +104,10 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
         .ds = ptr.segment,
     });
     const actual_read_len = regs.ax();
-    if (!in_dos_mem and error_code == 0)
-        transfer_buffer.?.protected_mode_segment.farPtr().read(buf[0..actual_read_len]);
+    if (!in_dos_mem and error_code == 0) {
+        var far_ptr = transfer_buffer.?.protected_mode_segment.farPtr();
+        _ = far_ptr.reader().read(buf[0..actual_read_len]) catch unreachable;
+    }
     return actual_read_len;
 }
 
