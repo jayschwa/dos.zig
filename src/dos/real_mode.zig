@@ -19,6 +19,38 @@ pub fn free(segment: u16) void {
     );
 }
 
+pub fn exec(path: [*:0]const u8) !u16 {
+    const param_block = [_]u16{0} ** 7;
+    var errno: u16 = undefined;
+    const flags = asm volatile (
+        \\ int $0x21
+        \\ pushfw
+        \\ popw %[flags]
+        : [flags] "=r" (-> u16),
+          [errno] "={ax}" (errno)
+        : [_] "{ax}" (@as(u16, 0x4b00)),
+          [_] "{bx}" (&param_block),
+          [_] "{dx}" (@ptrToInt(path))
+        : "bx", "dx", "cc"
+    );
+    if (flags & 1 != 0)
+        return switch (errno) {
+            2 => error.FileNotFound,
+            5 => error.AccessDenied,
+            8 => error.OutOfMemory,
+            11 => error.BadFormat,
+            else => error.Unexpected,
+            // NOTE: The following errors are not expected with the current implementation.
+            // 1 => error.BadFunction,
+            // 10 => error.BadEnvironment,
+        };
+    return asm ("int $0x21"
+        : [_] "={ax}" (-> u16)
+        : [_] "{ax}" (@as(u16, 0x4d00))
+        : "cc"
+    );
+}
+
 pub fn print(comptime format: []const u8, args: anytype) void {
     const writer = std.io.Writer(fd_t, error{}, write){
         .context = std.io.getStdErr().handle,

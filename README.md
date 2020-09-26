@@ -4,8 +4,8 @@ Write and cross-compile [DOS](https://wikipedia.org/wiki/DOS) programs with the
 [Zig programming language](https://ziglang.org). Programs run in 32-bit
 [protected mode](https://wikipedia.org/wiki/Protected_mode) and require a
 resident [DPMI host](https://wikipedia.org/wiki/DOS_Protected_Mode_Interface).
-[CWSDPMI](https://sandmann.dotster.com/cwsdpmi) is recommended for
-environments that do not have DPMI built-in.
+[CWSDPMI](https://sandmann.dotster.com/cwsdpmi) is required for environments
+that do not have DPMI built-in.
 
 This package is in a primordial state. It is a minimal demonstration of how to
 create a simple DOS program with Zig. Only basic file/terminal input/output are
@@ -23,7 +23,7 @@ Run:
 
 ``` sh
 zig build &&
-dosbox-x -fastlaunch -c 'cwsdpmi.exe -p' -c 'mount c zig-cache/bin' -c 'c:' -c 'execelf.exe'
+dosbox-x -fastlaunch -c 'mount c zig-cache/bin' -c 'c:' -c 'execelf.exe'
 ```
 
 ## Design
@@ -46,7 +46,6 @@ There are four main components of this package:
 
 - Proper error handling.
 - Parse environment data (command, variables) and hook into standard library abstractions.
-- Try to find and start a DPMI host (e.g. CWSDPMI) if DPMI is not detected.
 - Implement `mprotect` for stack guard and zero pages.
 - Implement a `page_allocator` for the standard library.
 - Turn the ELF loader into prependable program stub.
