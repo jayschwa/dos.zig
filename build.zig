@@ -25,9 +25,8 @@ pub fn build(b: *Builder) !void {
     demo_exe.setTarget(dos32);
 
     // Conserve the amount of space required at runtime by loading the executable
-    // data at 4 KiB (right after zero page), not 4 MiB. This uses a feature that
-    // has not been merged into Zig yet: https://github.com/ziglang/zig/pull/6121
-    if (@hasField(@TypeOf(demo_exe.*), "image_base")) demo_exe.image_base = 0x1000;
+    // data at 4 KiB (right after the zero page), not 4 MiB.
+    demo_exe.image_base = 0x1000;
 
     demo_exe.install();
 }
