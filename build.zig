@@ -35,6 +35,23 @@ pub fn build(b: *Builder) !void {
     demo_exe.image_base = 0x1000;
 
     demo_exe.install();
+
+    const run = b.step("run", "Run the demo program in DOSBox-X");
+    var mount_arg = std.ArrayList(u8).init(b.allocator);
+    try mount_arg.writer().print("mount c {}", .{b.getInstallPath(.Bin, "")});
+    const run_args = [_][]const u8{
+        "dosbox-x",
+        "-fastlaunch",
+        "-c",
+        mount_arg.items,
+        "-c",
+        "c:",
+        "-c",
+        "execelf.exe",
+    };
+    const run_cmd = b.addSystemCommand(&run_args);
+    run_cmd.step.dependOn(b.getInstallStep());
+    run.dependOn(&run_cmd.step);
 }
 
 fn setup(obj: *LibExeObjStep) *LibExeObjStep {

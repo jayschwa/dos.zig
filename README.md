@@ -22,8 +22,7 @@ Install:
 Run:
 
 ``` sh
-zig build &&
-dosbox-x -fastlaunch -c 'mount c zig-cache/bin' -c 'c:' -c 'execelf.exe'
+zig build run
 ```
 
 ## Design
