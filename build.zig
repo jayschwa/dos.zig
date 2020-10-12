@@ -4,6 +4,10 @@ const CrossTarget = std.zig.CrossTarget;
 const LibExeObjStep = std.build.LibExeObjStep;
 
 pub fn build(b: *Builder) !void {
+    const mode = switch (b.standardReleaseOptions()) {
+        .Debug => .ReleaseSafe, // TODO: Support debug builds.
+        else => |mode| mode,
+    };
     const cpu = "_i386+cmov"; // TODO: Retry without `cmov` after LLVM 11 upgrade.
     const dos16 = try CrossTarget.parse(.{
         .arch_os_abi = "i386-other-code16",
@@ -16,12 +20,14 @@ pub fn build(b: *Builder) !void {
 
     // 16-bit ELF loader
     const exec_elf_exe = setup(b.addExecutable("execelf", "src/exec_elf.zig"));
+    exec_elf_exe.setBuildMode(mode);
     exec_elf_exe.setTarget(dos16);
     exec_elf_exe.setLinkerScriptPath("src/mz.ld");
     exec_elf_exe.installRaw("execelf.exe"); // DOS (MZ) executable
 
     // 32-bit demo program
     const demo_exe = setup(b.addExecutable("demo", "src/demo.zig"));
+    demo_exe.setBuildMode(mode);
     demo_exe.setTarget(dos32);
 
     // Conserve the amount of space required at runtime by loading the executable
@@ -33,7 +39,6 @@ pub fn build(b: *Builder) !void {
 
 fn setup(obj: *LibExeObjStep) *LibExeObjStep {
     obj.addPackagePath("dos", "src/dos.zig");
-    obj.setBuildMode(.ReleaseSafe);
     obj.disable_stack_probing = true;
     obj.single_threaded = true;
     obj.strip = true;
