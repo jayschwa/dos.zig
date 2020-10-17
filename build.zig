@@ -8,14 +8,13 @@ pub fn build(b: *Builder) !void {
         .Debug => .ReleaseSafe, // TODO: Support debug builds.
         else => |mode| mode,
     };
-    const cpu = "_i386+cmov"; // TODO: Retry without `cmov` after LLVM 11 upgrade.
     const dos16 = try CrossTarget.parse(.{
         .arch_os_abi = "i386-other-code16",
-        .cpu_features = cpu,
+        .cpu_features = "_i386",
     });
     const dos32 = try CrossTarget.parse(.{
         .arch_os_abi = "i386-other-none",
-        .cpu_features = cpu,
+        .cpu_features = "_i386",
     });
 
     // 16-bit ELF loader

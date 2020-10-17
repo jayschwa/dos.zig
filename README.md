@@ -52,16 +52,6 @@ There are four main components of this package:
 
 ## Questions and Answers
 
-### Why do I get an "Invalid Opcode" error in [DOSBox](https://www.dosbox.com)?
-
-I have not looked into this deeply, but I believe it's because DOSBox does not
-support the `cmov` instruction. LLVM fails to generate code if it is not
-allowed to use `cmov`. I saw a commit for LLVM 11 that may resolve this issue,
-so hopefully things work well with DOSBox once LLVM 11 is finalized and Zig
-starts using it.
-
-In the meantime, try using [DOSBox-X](https://dosbox-x.com).
-
 ### Can I just target 16-bit real mode rather than require DPMI?
 
 It is technically possible, but not a goal of this package. Zig (via LLVM) can
