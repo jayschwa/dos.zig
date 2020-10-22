@@ -4,9 +4,6 @@ const panic = std.debug.panic;
 usingnamespace @import("bits.zig");
 const dpmi = @import("dpmi.zig");
 const FarPtr = @import("far_ptr.zig").FarPtr;
-const start = @import("start.zig");
-
-const in_dos_mem = std.builtin.abi == .code16;
 
 /// Error code of the last DOS system call.
 pub threadlocal var error_code: u16 = 0;
@@ -37,11 +34,6 @@ pub fn initTransferBuffer() !void {
 }
 
 pub fn copyToRealModeBuffer(bytes: []const u8) FarPtr {
-    if (in_dos_mem)
-        return FarPtr{
-            .segment = start.ds.?,
-            .offset = @intCast(u16, @ptrToInt(bytes.ptr)),
-        };
     var far_ptr = transfer_buffer.?.protected_mode_segment.farPtr();
     _ = far_ptr.writer().write(bytes) catch unreachable;
     return FarPtr{
@@ -85,17 +77,10 @@ pub fn close(handle: fd_t) void {
 
 pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
     // TODO: Cleanup ugly code.
-    const ptr = if (in_dos_mem)
-        FarPtr{
-            .segment = start.ds.?,
-            .offset = @intCast(u16, @ptrToInt(buf)),
-        }
-    else
-        FarPtr{
-            .segment = transfer_buffer.?.real_mode_segment,
-        };
-    const len = if (in_dos_mem) count else std.math.min(count, transfer_buffer.?.len);
-
+    const ptr = FarPtr{
+        .segment = transfer_buffer.?.real_mode_segment,
+    };
+    const len = std.math.min(count, transfer_buffer.?.len);
     const regs = int21(.{
         .eax = 0x3f00,
         .ebx = handle,
@@ -104,7 +89,7 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
         .ds = ptr.segment,
     });
     const actual_read_len = regs.ax();
-    if (!in_dos_mem and error_code == 0) {
+    if (error_code == 0) {
         var far_ptr = transfer_buffer.?.protected_mode_segment.farPtr();
         _ = far_ptr.reader().read(buf[0..actual_read_len]) catch unreachable;
     }
@@ -113,7 +98,7 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
 
 pub fn write(handle: fd_t, buf: [*]const u8, count: usize) u16 {
     const ptr = copyToRealModeBuffer(buf[0..count]);
-    const len = if (in_dos_mem) count else std.math.min(count, transfer_buffer.?.len);
+    const len = std.math.min(count, transfer_buffer.?.len);
     const regs = int21(.{
         .eax = 0x4000,
         .ebx = handle,

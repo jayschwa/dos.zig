@@ -8,55 +8,37 @@ pub fn build(b: *Builder) !void {
         .Debug => .ReleaseSafe, // TODO: Support debug builds.
         else => |mode| mode,
     };
-    const dos16 = try CrossTarget.parse(.{
-        .arch_os_abi = "i386-other-code16",
-        .cpu_features = "_i386",
-    });
-    const dos32 = try CrossTarget.parse(.{
+    const coff_exe = b.addExecutable("demo", "src/demo.zig");
+    coff_exe.disable_stack_probing = true;
+    coff_exe.addPackagePath("dos", "src/dos.zig");
+    coff_exe.setBuildMode(.ReleaseSafe);
+    coff_exe.setLinkerScriptPath("src/djcoff.ld");
+    coff_exe.setTarget(try CrossTarget.parse(.{
         .arch_os_abi = "i386-other-none",
         .cpu_features = "_i386",
+    }));
+    coff_exe.single_threaded = true;
+    coff_exe.strip = true;
+    coff_exe.installRaw("demo.coff");
+
+    var cat_cmd = std.ArrayList(u8).init(b.allocator);
+    // TODO: Host-neutral concatenation.
+    try cat_cmd.writer().print("cat deps/cwsdpmi/bin/CWSDSTUB.EXE {} > {}", .{
+        b.getInstallPath(.Bin, "demo.coff"),
+        b.getInstallPath(.Bin, "demo.exe"),
     });
-
-    // 16-bit ELF loader
-    const exec_elf_exe = setup(b.addExecutable("execelf", "src/exec_elf.zig"));
-    exec_elf_exe.setBuildMode(mode);
-    exec_elf_exe.setTarget(dos16);
-    exec_elf_exe.setLinkerScriptPath("src/mz.ld");
-    exec_elf_exe.installRaw("execelf.exe"); // DOS (MZ) executable
-
-    // 32-bit demo program
-    const demo_exe = setup(b.addExecutable("demo", "src/demo.zig"));
-    demo_exe.setBuildMode(mode);
-    demo_exe.setTarget(dos32);
-
-    // Conserve the amount of space required at runtime by loading the executable
-    // data at 4 KiB (right after the zero page), not 4 MiB.
-    demo_exe.image_base = 0x1000;
-
-    demo_exe.install();
+    const stub_cmd = b.addSystemCommand(&[_][]const u8{
+        "sh", "-c", cat_cmd.items,
+    });
+    stub_cmd.step.dependOn(b.getInstallStep());
+    const stub = b.step("stub", "Prepend stub to COFF executable"); // TODO: Incorporate into install.
+    stub.dependOn(&stub_cmd.step);
 
     const run = b.step("run", "Run the demo program in DOSBox-X");
-    var mount_arg = std.ArrayList(u8).init(b.allocator);
-    try mount_arg.writer().print("mount c {}", .{b.getInstallPath(.Bin, "")});
-    const run_args = [_][]const u8{
-        "dosbox-x",
-        "-fastlaunch",
-        "-c",
-        mount_arg.items,
-        "-c",
-        "c:",
-        "-c",
-        "execelf.exe",
-    };
-    const run_cmd = b.addSystemCommand(&run_args);
+    const run_cmd = b.addSystemCommand(&[_][]const u8{
+        "dosbox", b.getInstallPath(.Bin, "demo.exe"),
+    });
     run_cmd.step.dependOn(b.getInstallStep());
+    run_cmd.step.dependOn(stub);
     run.dependOn(&run_cmd.step);
-}
-
-fn setup(obj: *LibExeObjStep) *LibExeObjStep {
-    obj.addPackagePath("dos", "src/dos.zig");
-    obj.disable_stack_probing = true;
-    obj.single_threaded = true;
-    obj.strip = true;
-    return obj;
 }
