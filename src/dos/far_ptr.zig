@@ -7,28 +7,6 @@ pub const FarPtr = packed struct {
     pub const Reader = std.io.Reader(*FarPtr, error{}, read);
     pub const Writer = std.io.Writer(*FarPtr, error{}, write);
 
-    pub fn add(self: FarPtr, offset: usize) FarPtr {
-        return .{
-            .segment = self.segment,
-            .offset = self.offset + offset,
-        };
-    }
-
-    pub fn fill(self: FarPtr, value: u8, count: usize) void {
-        asm volatile (
-            \\ cld
-            \\ push %%es
-            \\ lesl (%[far_ptr]), %%edi
-            \\ rep stosb %%al, %%es:(%%edi)
-            \\ pop %%es
-            : // No outputs
-            : [far_ptr] "r" (&self),
-              [_] "{al}" (value),
-              [_] "{ecx}" (count)
-            : "cc", "ecx", "edi", "memory"
-        );
-    }
-
     pub fn reader(self: *FarPtr) Reader {
         return .{ .context = self };
     }
