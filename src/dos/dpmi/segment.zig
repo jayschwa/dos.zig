@@ -76,4 +76,12 @@ pub const Segment = struct {
               [_] "{dx}" (@truncate(u16, limit))
         );
     }
+
+    pub fn read(self: Segment, buffer: []u8) void {
+        return self.farPtr().read(buffer);
+    }
+
+    pub fn write(self: Segment, bytes: []const u8) void {
+        return self.farPtr().write(bytes);
+    }
 };

@@ -30,14 +30,6 @@ pub fn getErrno(rc: anytype) u16 {
     };
 }
 
-pub fn copyToRealModeBuffer(bytes: []const u8) FarPtr {
-    var far_ptr = transfer_buffer.farPtr();
-    _ = far_ptr.writer().write(bytes) catch unreachable;
-    return FarPtr{
-        .segment = transfer_buffer.real_mode_segment,
-    };
-}
-
 pub fn abort() noreturn {
     exit(1);
 }
@@ -56,11 +48,11 @@ pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) fd_t {
     // TODO: Use long filename open (int 0x21, ax=0x716c) if it's available.
     const len = std.mem.len(file_path) + 1;
     // TODO: Fail if len exceeds transfer buffer size.
-    const ptr = copyToRealModeBuffer(file_path[0..len]);
+    transfer_buffer.write(file_path[0..len]);
     const regs = int21(.{
         .eax = 0x3d00 | (flags & 3),
-        .edx = ptr.offset,
-        .ds = ptr.segment,
+        .edx = 0,
+        .ds = transfer_buffer.real_mode_segment,
     });
     return regs.ax();
 }
@@ -73,35 +65,30 @@ pub fn close(handle: fd_t) void {
 }
 
 pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
-    // TODO: Cleanup ugly code.
-    const ptr = FarPtr{
-        .segment = transfer_buffer.real_mode_segment,
-    };
     const len = std.math.min(count, transfer_buffer.len);
     const regs = int21(.{
         .eax = 0x3f00,
         .ebx = handle,
         .ecx = len,
-        .edx = ptr.offset,
-        .ds = ptr.segment,
+        .edx = 0,
+        .ds = transfer_buffer.real_mode_segment,
     });
     const actual_read_len = regs.ax();
     if (error_code == 0) {
-        var far_ptr = transfer_buffer.farPtr();
-        _ = far_ptr.reader().read(buf[0..actual_read_len]) catch unreachable;
+        transfer_buffer.read(buf[0..actual_read_len]);
     }
     return actual_read_len;
 }
 
 pub fn write(handle: fd_t, buf: [*]const u8, count: usize) u16 {
-    const ptr = copyToRealModeBuffer(buf[0..count]);
     const len = std.math.min(count, transfer_buffer.len);
+    transfer_buffer.write(buf[0..len]);
     const regs = int21(.{
         .eax = 0x4000,
         .ebx = handle,
         .ecx = len,
-        .edx = ptr.offset,
-        .ds = ptr.segment,
+        .edx = 0,
+        .ds = transfer_buffer.real_mode_segment,
     });
     return regs.ax();
 }

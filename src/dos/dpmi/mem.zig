@@ -33,8 +33,12 @@ pub const DosMemBlock = struct {
         };
     }
 
-    pub fn farPtr(self: DosMemBlock) FarPtr {
-        return self.protected_mode_segment.farPtr();
+    pub fn read(self: DosMemBlock, buffer: []u8) void {
+        return self.protected_mode_segment.read(buffer);
+    }
+
+    pub fn write(self: DosMemBlock, bytes: []const u8) void {
+        return self.protected_mode_segment.write(bytes);
     }
 };
 
