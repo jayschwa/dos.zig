@@ -21,6 +21,14 @@ pub const Segment = struct {
         return Segment{ .selector = selector };
     }
 
+    pub fn fromRegister(comptime register: []const u8) Segment {
+        return .{
+            .selector = asm ("movw %%" ++ register ++ ", %[selector]"
+                : [selector] "=r" (-> u16)
+            ),
+        };
+    }
+
     pub fn farPtr(self: Segment) FarPtr {
         return .{ .segment = self.selector };
     }

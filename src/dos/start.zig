@@ -1,8 +1,8 @@
 const root = @import("root");
 const std = @import("std");
 
-const dpmi = @import("dpmi.zig");
 const safe = @import("safe.zig");
+const Segment = @import("dpmi.zig").Segment;
 const system = @import("system.zig");
 
 comptime {
@@ -22,10 +22,34 @@ fn _start() callconv(.Naked) noreturn {
         : [_] "{esp}" (&_stack_ptr)
         : "dx", "ds", "es", "ss"
     );
-    // TODO: Use the transfer buffer provided by the stub loader.
-    system.transfer_buffer = dpmi.DosMemBlock.alloc(0x4000) catch |err| {
-        safe.print("error: {}\r\n", .{@errorName(err)});
-        std.os.abort();
+
+    // Initialize transfer buffer from stub info.
+    const stub_info = Segment.fromRegister("fs").farPtr().
+        reader().readStruct(StubInfo) catch unreachable;
+    system.transfer_buffer = .{
+        .protected_mode_segment = .{
+            .selector = stub_info.ds_selector,
+        },
+        .real_mode_segment = stub_info.ds_segment,
+        .len = stub_info.min_keep,
     };
+
     std.os.exit(std.start.callMain());
 }
+
+const StubInfo = extern struct {
+    magic: [16]u8,
+    size: u16, // Number of bytes in structure.
+    min_stack: u32, // Minimum amount of DPMI stack space.
+    mem_handle: u32, // DPMI memory block handle.
+    initial_size: u32, // Size of initial segment.
+    min_keep: u16, // Amount of automatic real-mode buffer.
+    ds_selector: u16, // DS selector (used for transfer buffer).
+    ds_segment: u16, // DS segment (used for simulated calls).
+    psp_selector: u16, // Program segment prefix selector.
+    cs_selector: u16, // To be freed.
+    env_size: u16, // Number of bytes in environment.
+    basename: [8]u8, // Base name of executable.
+    argv0: [16]u8, // Used only by the application.
+    dpmi_server: [16]u8, // Not used by CWSDSTUB.
+};
