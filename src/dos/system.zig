@@ -31,7 +31,7 @@ pub fn getErrno(rc: anytype) u16 {
 }
 
 pub fn copyToRealModeBuffer(bytes: []const u8) FarPtr {
-    var far_ptr = transfer_buffer.protected_mode_segment.farPtr();
+    var far_ptr = transfer_buffer.farPtr();
     _ = far_ptr.writer().write(bytes) catch unreachable;
     return FarPtr{
         .segment = transfer_buffer.real_mode_segment,
@@ -87,7 +87,7 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
     });
     const actual_read_len = regs.ax();
     if (error_code == 0) {
-        var far_ptr = transfer_buffer.protected_mode_segment.farPtr();
+        var far_ptr = transfer_buffer.farPtr();
         _ = far_ptr.reader().read(buf[0..actual_read_len]) catch unreachable;
     }
     return actual_read_len;

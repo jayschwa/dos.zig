@@ -1,5 +1,8 @@
 const FarPtr = @import("../far_ptr.zig").FarPtr;
 
+// TODO: Enforce descriptor usage rules with the type system.
+//
+// See: http://www.delorie.com/djgpp/doc/dpmi/descriptor-rules.html
 pub const Segment = struct {
     selector: u16,
 

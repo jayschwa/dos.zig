@@ -1,5 +1,5 @@
 const std = @import("std");
-
+const FarPtr = @import("../far_ptr.zig").FarPtr;
 const Segment = @import("segment.zig").Segment;
 
 /// DosMemBlock represents an allocated block of memory that resides below the
@@ -31,6 +31,10 @@ pub const DosMemBlock = struct {
             .real_mode_segment = real_segment,
             .len = aligned_size,
         };
+    }
+
+    pub fn farPtr(self: DosMemBlock) FarPtr {
+        return self.protected_mode_segment.farPtr();
     }
 };
 
