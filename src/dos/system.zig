@@ -8,6 +8,9 @@ const FarPtr = @import("far_ptr.zig").FarPtr;
 /// Error code of the last DOS system call.
 pub threadlocal var error_code: u16 = 0;
 
+/// Buffer in DOS memory for transferring data with system calls.
+pub var transfer_buffer: dpmi.DosMemBlock = undefined;
+
 fn int21(registers: dpmi.RealModeRegisters) dpmi.RealModeRegisters {
     var regs = registers;
     dpmi.simulateInterrupt(0x21, &regs);
@@ -27,17 +30,11 @@ pub fn getErrno(rc: anytype) u16 {
     };
 }
 
-var transfer_buffer: ?dpmi.DosMemBlock = null;
-
-pub fn initTransferBuffer() !void {
-    transfer_buffer = try dpmi.DosMemBlock.alloc(0x4000);
-}
-
 pub fn copyToRealModeBuffer(bytes: []const u8) FarPtr {
-    var far_ptr = transfer_buffer.?.protected_mode_segment.farPtr();
+    var far_ptr = transfer_buffer.protected_mode_segment.farPtr();
     _ = far_ptr.writer().write(bytes) catch unreachable;
     return FarPtr{
-        .segment = transfer_buffer.?.real_mode_segment,
+        .segment = transfer_buffer.real_mode_segment,
     };
 }
 
@@ -78,9 +75,9 @@ pub fn close(handle: fd_t) void {
 pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
     // TODO: Cleanup ugly code.
     const ptr = FarPtr{
-        .segment = transfer_buffer.?.real_mode_segment,
+        .segment = transfer_buffer.real_mode_segment,
     };
-    const len = std.math.min(count, transfer_buffer.?.len);
+    const len = std.math.min(count, transfer_buffer.len);
     const regs = int21(.{
         .eax = 0x3f00,
         .ebx = handle,
@@ -90,7 +87,7 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
     });
     const actual_read_len = regs.ax();
     if (error_code == 0) {
-        var far_ptr = transfer_buffer.?.protected_mode_segment.farPtr();
+        var far_ptr = transfer_buffer.protected_mode_segment.farPtr();
         _ = far_ptr.reader().read(buf[0..actual_read_len]) catch unreachable;
     }
     return actual_read_len;
@@ -98,7 +95,7 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
 
 pub fn write(handle: fd_t, buf: [*]const u8, count: usize) u16 {
     const ptr = copyToRealModeBuffer(buf[0..count]);
-    const len = std.math.min(count, transfer_buffer.?.len);
+    const len = std.math.min(count, transfer_buffer.len);
     const regs = int21(.{
         .eax = 0x4000,
         .ebx = handle,

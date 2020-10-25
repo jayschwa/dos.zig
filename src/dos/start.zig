@@ -1,6 +1,7 @@
 const root = @import("root");
 const std = @import("std");
 
+const dpmi = @import("dpmi.zig");
 const safe = @import("safe.zig");
 const system = @import("system.zig");
 
@@ -22,7 +23,7 @@ fn _start() callconv(.Naked) noreturn {
         : "dx", "ds", "es", "ss"
     );
     // TODO: Use the transfer buffer provided by the stub loader.
-    system.initTransferBuffer() catch |err| {
+    system.transfer_buffer = dpmi.DosMemBlock.alloc(0x4000) catch |err| {
         safe.print("error: {}\r\n", .{@errorName(err)});
         std.os.abort();
     };
