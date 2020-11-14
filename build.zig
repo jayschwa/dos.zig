@@ -8,7 +8,7 @@ pub fn build(b: *Builder) !void {
     const coff_exe = b.addExecutable("demo", "src/demo.zig");
     coff_exe.disable_stack_probing = true;
     coff_exe.addPackagePath("dos", "src/dos.zig");
-    coff_exe.setBuildMode(.ReleaseSafe);
+    coff_exe.setBuildMode(mode);
     coff_exe.setLinkerScriptPath("src/djcoff.ld");
     coff_exe.setTarget(try CrossTarget.parse(.{
         .arch_os_abi = "i386-other-none",
