@@ -4,7 +4,10 @@ const CrossTarget = std.zig.CrossTarget;
 const LibExeObjStep = std.build.LibExeObjStep;
 
 pub fn build(b: *Builder) !void {
-    const mode = b.standardReleaseOptions();
+    const mode = switch (b.standardReleaseOptions()) {
+        .Debug => .ReleaseSafe, // TODO: Support debug builds.
+        else => |mode| mode,
+    };
     const coff_exe = b.addExecutable("demo", "src/demo.zig");
     coff_exe.disable_stack_probing = true;
     coff_exe.addPackagePath("dos", "src/dos.zig");
@@ -15,7 +18,7 @@ pub fn build(b: *Builder) !void {
         .cpu_features = "_i386",
     }));
     coff_exe.single_threaded = true;
-    coff_exe.strip = true; // TODO: Support debug info.
+    coff_exe.strip = true;
     coff_exe.installRaw("demo.coff");
 
     var cat_cmd = std.ArrayList(u8).init(b.allocator);
