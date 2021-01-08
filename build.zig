@@ -20,7 +20,7 @@ pub fn build(b: *Builder) !void {
 
     var cat_cmd = std.ArrayList(u8).init(b.allocator);
     // TODO: Host-neutral concatenation.
-    try cat_cmd.writer().print("cat deps/cwsdpmi/bin/CWSDSTUB.EXE {} > {}", .{
+    try cat_cmd.writer().print("cat deps/cwsdpmi/bin/CWSDSTUB.EXE {s} > {s}", .{
         b.getInstallPath(.Bin, "demo.coff"),
         b.getInstallPath(.Bin, "demo.exe"),
     });
@@ -31,7 +31,7 @@ pub fn build(b: *Builder) !void {
     const stub = b.step("stub", "Prepend stub to COFF executable"); // TODO: Incorporate into install.
     stub.dependOn(&stub_cmd.step);
 
-    const run = b.step("run", "Run the demo program in DOSBox-X");
+    const run = b.step("run", "Run the demo program in DOSBox");
     const run_cmd = b.addSystemCommand(&[_][]const u8{
         "dosbox", b.getInstallPath(.Bin, "demo.exe"),
     });

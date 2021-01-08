@@ -17,7 +17,7 @@ pub fn main() !void {
         if (line[line.len - 1] == '\r') line = line[0..(line.len - 1)];
         n = std.fmt.parseInt(usize, line, 10) catch |err| {
             // TODO: Drain following '\n' in DOSEMU2. May need buffered reader?
-            try stdout.print("error: {}\r\n", .{@errorName(err)});
+            try stdout.print("error: {s}\r\n", .{@errorName(err)});
             continue;
         };
         break;

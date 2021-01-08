@@ -28,7 +28,7 @@ pub const RealModeRegisters = extern struct {
 pub fn simulateInterrupt(interrupt: u8, registers: *RealModeRegisters) void {
     simulateInterruptWithStack(0x21, registers, 0) catch |err| {
         // All errors are stack-related and thus unexpected.
-        panic(@src().fn_name ++ " failed with unexpected error: {}", .{@errorName(err)});
+        panic(@src().fn_name ++ " failed with unexpected error: {s}", .{@errorName(err)});
     };
 }
 
