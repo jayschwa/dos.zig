@@ -21,7 +21,7 @@ you wish to adapt it for your own needs.
 
 Install:
 
-- [Zig](https://ziglang.org/download) (0.7.0 or newer)
+- [Zig](https://ziglang.org/download) (0.8.0 or newer)
 - [DOSBox](https://www.dosbox.com)
 
 Run:
