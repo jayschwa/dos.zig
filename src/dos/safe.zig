@@ -10,6 +10,7 @@ pub const writer = Writer(void, error{}, write){
 };
 
 pub fn write(context: void, bytes: []const u8) !usize {
+    _ = context;
     for (bytes) |byte| asm volatile ("int $0x21"
         : // No outputs
         : [_] "{ah}" (@as(u8, 0x2)),

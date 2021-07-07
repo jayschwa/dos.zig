@@ -22,6 +22,7 @@ fn int21(registers: dpmi.RealModeRegisters) dpmi.RealModeRegisters {
 }
 
 pub fn getErrno(rc: anytype) u16 {
+    _ = rc;
     return switch (error_code) {
         // TODO: Map known DOS error codes to C-style error codes.
         0 => 0,
@@ -44,6 +45,7 @@ pub fn exit(status: u8) noreturn {
 }
 
 pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) fd_t {
+    _ = mode;
     // TODO: Can mode be reasonably mapped onto DOS 3.1 sharing mode bits?
     // TODO: Use long filename open (int 0x21, ax=0x716c) if it's available.
     const len = std.mem.len(file_path) + 1;
@@ -58,7 +60,7 @@ pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) fd_t {
 }
 
 pub fn close(handle: fd_t) void {
-    const regs = int21(.{
+    _ = int21(.{
         .eax = 0x3e00,
         .ebx = handle,
     });
