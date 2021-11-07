@@ -10,6 +10,7 @@ pub fn build(b: *Builder) !void {
         .Debug => .ReleaseSafe, // TODO: Support debug builds.
         else => |mode| mode,
     };
+
     const coff_exe = b.addExecutable("demo", "src/demo.zig");
     coff_exe.disable_stack_probing = true;
     coff_exe.addPackagePath("dos", "src/dos.zig");
@@ -28,30 +29,34 @@ pub fn build(b: *Builder) !void {
     }));
     coff_exe.single_threaded = true;
     coff_exe.strip = true;
-    coff_exe.installRaw("demo.coff");
+    const install_coff_exe = b.addInstallRaw(coff_exe, "demo.coff");
 
     // Old value is .Bin and new value is .bin.
     // See https://github.com/ziglang/zig/pull/7959.
     const bin_dir: InstallDir = if (comptime std.meta.trait.hasField("bin")(InstallDir)) .bin else .Bin;
 
     var cat_cmd = std.ArrayList(u8).init(b.allocator);
+    defer cat_cmd.deinit();
+
     // TODO: Host-neutral concatenation.
-    try cat_cmd.writer().print("cat deps/cwsdpmi/bin/CWSDSTUB.EXE {s} > {s}", .{
+    try cat_cmd.writer().print("cat {s} {s} > {s}", .{
+        b.pathFromRoot("deps/cwsdpmi/bin/CWSDSTUB.EXE"),
         b.getInstallPath(bin_dir, "demo.coff"),
         b.getInstallPath(bin_dir, "demo.exe"),
     });
-    const stub_cmd = b.addSystemCommand(&[_][]const u8{
+
+    const add_stub = b.addSystemCommand(&[_][]const u8{
         "sh", "-c", cat_cmd.items,
     });
-    stub_cmd.step.dependOn(b.getInstallStep());
-    const stub = b.step("stub", "Prepend stub to COFF executable"); // TODO: Incorporate into install.
-    stub.dependOn(&stub_cmd.step);
+    add_stub.step.dependOn(&install_coff_exe.step);
+    b.pushInstalledFile(bin_dir, "demo.exe");
+    b.getInstallStep().dependOn(&add_stub.step);
 
-    const run = b.step("run", "Run the demo program in DOSBox");
-    const run_cmd = b.addSystemCommand(&[_][]const u8{
+    const run_in_dosbox = b.addSystemCommand(&[_][]const u8{
         "dosbox", b.getInstallPath(bin_dir, "demo.exe"),
     });
-    run_cmd.step.dependOn(b.getInstallStep());
-    run_cmd.step.dependOn(stub);
-    run.dependOn(&run_cmd.step);
+    run_in_dosbox.step.dependOn(b.getInstallStep());
+
+    const run = b.step("run", "Run the demo program in DOSBox");
+    run.dependOn(&run_in_dosbox.step);
 }
