@@ -1,9 +1,28 @@
 const std = @import("std");
 const panic = std.debug.panic;
 
-usingnamespace @import("bits.zig");
 const dpmi = @import("dpmi.zig");
 const FarPtr = @import("far_ptr.zig").FarPtr;
+
+pub const fd_t = u16;
+pub const mode_t = u8;
+pub const off_t = i32;
+
+pub const E = @import("errno.zig").E;
+
+pub const PATH_MAX = 260;
+
+pub const STDIN_FILENO = 0;
+pub const STDOUT_FILENO = 1;
+pub const STDERR_FILENO = 2;
+
+pub const O_RDONLY = 0;
+pub const O_WRONLY = 1;
+pub const O_RDWR = 2;
+
+pub const SEEK_SET = 0;
+pub const SEEK_CUR = 1;
+pub const SEEK_END = 2;
 
 /// Error code of the last DOS system call.
 pub threadlocal var error_code: u16 = 0;
@@ -21,12 +40,12 @@ fn int21(registers: dpmi.RealModeRegisters) dpmi.RealModeRegisters {
     return regs;
 }
 
-pub fn getErrno(rc: anytype) u16 {
+pub fn getErrno(rc: anytype) E {
     _ = rc;
     return switch (error_code) {
         // TODO: Map known DOS error codes to C-style error codes.
-        0 => 0,
-        2 => ENOENT,
+        0 => E.SUCCESS,
+        2 => E.NOENT,
         else => panic("Unmapped DOS error code: {}", .{error_code}),
     };
 }

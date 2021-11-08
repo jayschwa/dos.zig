@@ -1,459 +1,463 @@
-// This file is copied from std/os/bits/linux/errno-generic.zig.
+// This file is copied from std/os/linux/errno/generic.zig.
+// TODO: Implement real DOS error codes.
 
-/// Operation not permitted
-pub const EPERM = 1;
+pub const E = enum(u16) {
+    /// No error occurred.
+    /// Same code used for `NSROK`.
+    SUCCESS = 0,
 
-/// No such file or directory
-pub const ENOENT = 2;
+    /// Operation not permitted
+    PERM = 1,
 
-/// No such process
-pub const ESRCH = 3;
+    /// No such file or directory
+    NOENT = 2,
 
-/// Interrupted system call
-pub const EINTR = 4;
+    /// No such process
+    SRCH = 3,
 
-/// I/O error
-pub const EIO = 5;
+    /// Interrupted system call
+    INTR = 4,
 
-/// No such device or address
-pub const ENXIO = 6;
+    /// I/O error
+    IO = 5,
 
-/// Arg list too long
-pub const E2BIG = 7;
+    /// No such device or address
+    NXIO = 6,
 
-/// Exec format error
-pub const ENOEXEC = 8;
+    /// Arg list too long
+    @"2BIG" = 7,
 
-/// Bad file number
-pub const EBADF = 9;
+    /// Exec format error
+    NOEXEC = 8,
 
-/// No child processes
-pub const ECHILD = 10;
+    /// Bad file number
+    BADF = 9,
 
-/// Try again
-pub const EAGAIN = 11;
+    /// No child processes
+    CHILD = 10,
 
-/// Out of memory
-pub const ENOMEM = 12;
+    /// Try again
+    /// Also means: WOULDBLOCK: operation would block
+    AGAIN = 11,
 
-/// Permission denied
-pub const EACCES = 13;
+    /// Out of memory
+    NOMEM = 12,
 
-/// Bad address
-pub const EFAULT = 14;
+    /// Permission denied
+    ACCES = 13,
 
-/// Block device required
-pub const ENOTBLK = 15;
+    /// Bad address
+    FAULT = 14,
 
-/// Device or resource busy
-pub const EBUSY = 16;
+    /// Block device required
+    NOTBLK = 15,
 
-/// File exists
-pub const EEXIST = 17;
+    /// Device or resource busy
+    BUSY = 16,
 
-/// Cross-device link
-pub const EXDEV = 18;
+    /// File exists
+    EXIST = 17,
 
-/// No such device
-pub const ENODEV = 19;
+    /// Cross-device link
+    XDEV = 18,
 
-/// Not a directory
-pub const ENOTDIR = 20;
+    /// No such device
+    NODEV = 19,
 
-/// Is a directory
-pub const EISDIR = 21;
+    /// Not a directory
+    NOTDIR = 20,
 
-/// Invalid argument
-pub const EINVAL = 22;
+    /// Is a directory
+    ISDIR = 21,
 
-/// File table overflow
-pub const ENFILE = 23;
+    /// Invalid argument
+    INVAL = 22,
 
-/// Too many open files
-pub const EMFILE = 24;
+    /// File table overflow
+    NFILE = 23,
 
-/// Not a typewriter
-pub const ENOTTY = 25;
+    /// Too many open files
+    MFILE = 24,
 
-/// Text file busy
-pub const ETXTBSY = 26;
+    /// Not a typewriter
+    NOTTY = 25,
 
-/// File too large
-pub const EFBIG = 27;
+    /// Text file busy
+    TXTBSY = 26,
 
-/// No space left on device
-pub const ENOSPC = 28;
+    /// File too large
+    FBIG = 27,
 
-/// Illegal seek
-pub const ESPIPE = 29;
+    /// No space left on device
+    NOSPC = 28,
 
-/// Read-only file system
-pub const EROFS = 30;
+    /// Illegal seek
+    SPIPE = 29,
 
-/// Too many links
-pub const EMLINK = 31;
+    /// Read-only file system
+    ROFS = 30,
 
-/// Broken pipe
-pub const EPIPE = 32;
+    /// Too many links
+    MLINK = 31,
 
-/// Math argument out of domain of func
-pub const EDOM = 33;
+    /// Broken pipe
+    PIPE = 32,
 
-/// Math result not representable
-pub const ERANGE = 34;
+    /// Math argument out of domain of func
+    DOM = 33,
 
-/// Resource deadlock would occur
-pub const EDEADLK = 35;
+    /// Math result not representable
+    RANGE = 34,
 
-/// File name too long
-pub const ENAMETOOLONG = 36;
+    /// Resource deadlock would occur
+    DEADLK = 35,
 
-/// No record locks available
-pub const ENOLCK = 37;
+    /// File name too long
+    NAMETOOLONG = 36,
 
-/// Function not implemented
-pub const ENOSYS = 38;
+    /// No record locks available
+    NOLCK = 37,
 
-/// Directory not empty
-pub const ENOTEMPTY = 39;
+    /// Function not implemented
+    NOSYS = 38,
 
-/// Too many symbolic links encountered
-pub const ELOOP = 40;
+    /// Directory not empty
+    NOTEMPTY = 39,
 
-/// Operation would block
-pub const EWOULDBLOCK = EAGAIN;
+    /// Too many symbolic links encountered
+    LOOP = 40,
 
-/// No message of desired type
-pub const ENOMSG = 42;
+    /// No message of desired type
+    NOMSG = 42,
 
-/// Identifier removed
-pub const EIDRM = 43;
+    /// Identifier removed
+    IDRM = 43,
 
-/// Channel number out of range
-pub const ECHRNG = 44;
+    /// Channel number out of range
+    CHRNG = 44,
 
-/// Level 2 not synchronized
-pub const EL2NSYNC = 45;
+    /// Level 2 not synchronized
+    L2NSYNC = 45,
 
-/// Level 3 halted
-pub const EL3HLT = 46;
+    /// Level 3 halted
+    L3HLT = 46,
 
-/// Level 3 reset
-pub const EL3RST = 47;
+    /// Level 3 reset
+    L3RST = 47,
 
-/// Link number out of range
-pub const ELNRNG = 48;
+    /// Link number out of range
+    LNRNG = 48,
 
-/// Protocol driver not attached
-pub const EUNATCH = 49;
+    /// Protocol driver not attached
+    UNATCH = 49,
 
-/// No CSI structure available
-pub const ENOCSI = 50;
+    /// No CSI structure available
+    NOCSI = 50,
 
-/// Level 2 halted
-pub const EL2HLT = 51;
+    /// Level 2 halted
+    L2HLT = 51,
 
-/// Invalid exchange
-pub const EBADE = 52;
+    /// Invalid exchange
+    BADE = 52,
 
-/// Invalid request descriptor
-pub const EBADR = 53;
+    /// Invalid request descriptor
+    BADR = 53,
 
-/// Exchange full
-pub const EXFULL = 54;
+    /// Exchange full
+    XFULL = 54,
 
-/// No anode
-pub const ENOANO = 55;
+    /// No anode
+    NOANO = 55,
 
-/// Invalid request code
-pub const EBADRQC = 56;
+    /// Invalid request code
+    BADRQC = 56,
 
-/// Invalid slot
-pub const EBADSLT = 57;
+    /// Invalid slot
+    BADSLT = 57,
 
-/// Bad font file format
-pub const EBFONT = 59;
+    /// Bad font file format
+    BFONT = 59,
 
-/// Device not a stream
-pub const ENOSTR = 60;
+    /// Device not a stream
+    NOSTR = 60,
 
-/// No data available
-pub const ENODATA = 61;
+    /// No data available
+    NODATA = 61,
 
-/// Timer expired
-pub const ETIME = 62;
+    /// Timer expired
+    TIME = 62,
 
-/// Out of streams resources
-pub const ENOSR = 63;
+    /// Out of streams resources
+    NOSR = 63,
 
-/// Machine is not on the network
-pub const ENONET = 64;
+    /// Machine is not on the network
+    NONET = 64,
 
-/// Package not installed
-pub const ENOPKG = 65;
+    /// Package not installed
+    NOPKG = 65,
 
-/// Object is remote
-pub const EREMOTE = 66;
+    /// Object is remote
+    REMOTE = 66,
 
-/// Link has been severed
-pub const ENOLINK = 67;
+    /// Link has been severed
+    NOLINK = 67,
 
-/// Advertise error
-pub const EADV = 68;
+    /// Advertise error
+    ADV = 68,
 
-/// Srmount error
-pub const ESRMNT = 69;
+    /// Srmount error
+    SRMNT = 69,
 
-/// Communication error on send
-pub const ECOMM = 70;
+    /// Communication error on send
+    COMM = 70,
 
-/// Protocol error
-pub const EPROTO = 71;
+    /// Protocol error
+    PROTO = 71,
 
-/// Multihop attempted
-pub const EMULTIHOP = 72;
+    /// Multihop attempted
+    MULTIHOP = 72,
 
-/// RFS specific error
-pub const EDOTDOT = 73;
+    /// RFS specific error
+    DOTDOT = 73,
 
-/// Not a data message
-pub const EBADMSG = 74;
+    /// Not a data message
+    BADMSG = 74,
 
-/// Value too large for defined data type
-pub const EOVERFLOW = 75;
+    /// Value too large for defined data type
+    OVERFLOW = 75,
 
-/// Name not unique on network
-pub const ENOTUNIQ = 76;
+    /// Name not unique on network
+    NOTUNIQ = 76,
 
-/// File descriptor in bad state
-pub const EBADFD = 77;
+    /// File descriptor in bad state
+    BADFD = 77,
 
-/// Remote address changed
-pub const EREMCHG = 78;
+    /// Remote address changed
+    REMCHG = 78,
 
-/// Can not access a needed shared library
-pub const ELIBACC = 79;
+    /// Can not access a needed shared library
+    LIBACC = 79,
 
-/// Accessing a corrupted shared library
-pub const ELIBBAD = 80;
+    /// Accessing a corrupted shared library
+    LIBBAD = 80,
 
-/// .lib section in a.out corrupted
-pub const ELIBSCN = 81;
+    /// .lib section in a.out corrupted
+    LIBSCN = 81,
 
-/// Attempting to link in too many shared libraries
-pub const ELIBMAX = 82;
+    /// Attempting to link in too many shared libraries
+    LIBMAX = 82,
 
-/// Cannot exec a shared library directly
-pub const ELIBEXEC = 83;
+    /// Cannot exec a shared library directly
+    LIBEXEC = 83,
 
-/// Illegal byte sequence
-pub const EILSEQ = 84;
+    /// Illegal byte sequence
+    ILSEQ = 84,
 
-/// Interrupted system call should be restarted
-pub const ERESTART = 85;
+    /// Interrupted system call should be restarted
+    RESTART = 85,
 
-/// Streams pipe error
-pub const ESTRPIPE = 86;
+    /// Streams pipe error
+    STRPIPE = 86,
 
-/// Too many users
-pub const EUSERS = 87;
+    /// Too many users
+    USERS = 87,
 
-/// Socket operation on non-socket
-pub const ENOTSOCK = 88;
+    /// Socket operation on non-socket
+    NOTSOCK = 88,
 
-/// Destination address required
-pub const EDESTADDRREQ = 89;
+    /// Destination address required
+    DESTADDRREQ = 89,
 
-/// Message too long
-pub const EMSGSIZE = 90;
+    /// Message too long
+    MSGSIZE = 90,
 
-/// Protocol wrong type for socket
-pub const EPROTOTYPE = 91;
+    /// Protocol wrong type for socket
+    PROTOTYPE = 91,
 
-/// Protocol not available
-pub const ENOPROTOOPT = 92;
+    /// Protocol not available
+    NOPROTOOPT = 92,
 
-/// Protocol not supported
-pub const EPROTONOSUPPORT = 93;
+    /// Protocol not supported
+    PROTONOSUPPORT = 93,
 
-/// Socket type not supported
-pub const ESOCKTNOSUPPORT = 94;
+    /// Socket type not supported
+    SOCKTNOSUPPORT = 94,
 
-/// Operation not supported on transport endpoint
-pub const EOPNOTSUPP = 95;
-pub const ENOTSUP = EOPNOTSUPP;
+    /// Operation not supported on transport endpoint
+    /// This code also means `NOTSUP`.
+    OPNOTSUPP = 95,
 
-/// Protocol family not supported
-pub const EPFNOSUPPORT = 96;
+    /// Protocol family not supported
+    PFNOSUPPORT = 96,
 
-/// Address family not supported by protocol
-pub const EAFNOSUPPORT = 97;
+    /// Address family not supported by protocol
+    AFNOSUPPORT = 97,
 
-/// Address already in use
-pub const EADDRINUSE = 98;
+    /// Address already in use
+    ADDRINUSE = 98,
 
-/// Cannot assign requested address
-pub const EADDRNOTAVAIL = 99;
+    /// Cannot assign requested address
+    ADDRNOTAVAIL = 99,
 
-/// Network is down
-pub const ENETDOWN = 100;
+    /// Network is down
+    NETDOWN = 100,
 
-/// Network is unreachable
-pub const ENETUNREACH = 101;
+    /// Network is unreachable
+    NETUNREACH = 101,
 
-/// Network dropped connection because of reset
-pub const ENETRESET = 102;
+    /// Network dropped connection because of reset
+    NETRESET = 102,
 
-/// Software caused connection abort
-pub const ECONNABORTED = 103;
+    /// Software caused connection abort
+    CONNABORTED = 103,
 
-/// Connection reset by peer
-pub const ECONNRESET = 104;
+    /// Connection reset by peer
+    CONNRESET = 104,
 
-/// No buffer space available
-pub const ENOBUFS = 105;
+    /// No buffer space available
+    NOBUFS = 105,
 
-/// Transport endpoint is already connected
-pub const EISCONN = 106;
+    /// Transport endpoint is already connected
+    ISCONN = 106,
 
-/// Transport endpoint is not connected
-pub const ENOTCONN = 107;
+    /// Transport endpoint is not connected
+    NOTCONN = 107,
 
-/// Cannot send after transport endpoint shutdown
-pub const ESHUTDOWN = 108;
+    /// Cannot send after transport endpoint shutdown
+    SHUTDOWN = 108,
 
-/// Too many references: cannot splice
-pub const ETOOMANYREFS = 109;
+    /// Too many references: cannot splice
+    TOOMANYREFS = 109,
 
-/// Connection timed out
-pub const ETIMEDOUT = 110;
+    /// Connection timed out
+    TIMEDOUT = 110,
 
-/// Connection refused
-pub const ECONNREFUSED = 111;
+    /// Connection refused
+    CONNREFUSED = 111,
 
-/// Host is down
-pub const EHOSTDOWN = 112;
+    /// Host is down
+    HOSTDOWN = 112,
 
-/// No route to host
-pub const EHOSTUNREACH = 113;
+    /// No route to host
+    HOSTUNREACH = 113,
 
-/// Operation already in progress
-pub const EALREADY = 114;
+    /// Operation already in progress
+    ALREADY = 114,
 
-/// Operation now in progress
-pub const EINPROGRESS = 115;
+    /// Operation now in progress
+    INPROGRESS = 115,
 
-/// Stale NFS file handle
-pub const ESTALE = 116;
+    /// Stale NFS file handle
+    STALE = 116,
 
-/// Structure needs cleaning
-pub const EUCLEAN = 117;
+    /// Structure needs cleaning
+    UCLEAN = 117,
 
-/// Not a XENIX named type file
-pub const ENOTNAM = 118;
+    /// Not a XENIX named type file
+    NOTNAM = 118,
 
-/// No XENIX semaphores available
-pub const ENAVAIL = 119;
+    /// No XENIX semaphores available
+    NAVAIL = 119,
 
-/// Is a named type file
-pub const EISNAM = 120;
+    /// Is a named type file
+    ISNAM = 120,
 
-/// Remote I/O error
-pub const EREMOTEIO = 121;
+    /// Remote I/O error
+    REMOTEIO = 121,
 
-/// Quota exceeded
-pub const EDQUOT = 122;
+    /// Quota exceeded
+    DQUOT = 122,
 
-/// No medium found
-pub const ENOMEDIUM = 123;
+    /// No medium found
+    NOMEDIUM = 123,
 
-/// Wrong medium type
-pub const EMEDIUMTYPE = 124;
+    /// Wrong medium type
+    MEDIUMTYPE = 124,
 
-/// Operation canceled
-pub const ECANCELED = 125;
+    /// Operation canceled
+    CANCELED = 125,
 
-/// Required key not available
-pub const ENOKEY = 126;
+    /// Required key not available
+    NOKEY = 126,
 
-/// Key has expired
-pub const EKEYEXPIRED = 127;
+    /// Key has expired
+    KEYEXPIRED = 127,
 
-/// Key has been revoked
-pub const EKEYREVOKED = 128;
+    /// Key has been revoked
+    KEYREVOKED = 128,
 
-/// Key was rejected by service
-pub const EKEYREJECTED = 129;
+    /// Key was rejected by service
+    KEYREJECTED = 129,
 
-// for robust mutexes
+    // for robust mutexes
 
-/// Owner died
-pub const EOWNERDEAD = 130;
+    /// Owner died
+    OWNERDEAD = 130,
 
-/// State not recoverable
-pub const ENOTRECOVERABLE = 131;
+    /// State not recoverable
+    NOTRECOVERABLE = 131,
 
-/// Operation not possible due to RF-kill
-pub const ERFKILL = 132;
+    /// Operation not possible due to RF-kill
+    RFKILL = 132,
 
-/// Memory page has hardware error
-pub const EHWPOISON = 133;
+    /// Memory page has hardware error
+    HWPOISON = 133,
 
-// nameserver query return codes
+    // nameserver query return codes
 
-/// DNS server returned answer with no data
-pub const ENSROK = 0;
+    /// DNS server returned answer with no data
+    NSRNODATA = 160,
 
-/// DNS server returned answer with no data
-pub const ENSRNODATA = 160;
+    /// DNS server claims query was misformatted
+    NSRFORMERR = 161,
 
-/// DNS server claims query was misformatted
-pub const ENSRFORMERR = 161;
+    /// DNS server returned general failure
+    NSRSERVFAIL = 162,
 
-/// DNS server returned general failure
-pub const ENSRSERVFAIL = 162;
+    /// Domain name not found
+    NSRNOTFOUND = 163,
 
-/// Domain name not found
-pub const ENSRNOTFOUND = 163;
+    /// DNS server does not implement requested operation
+    NSRNOTIMP = 164,
 
-/// DNS server does not implement requested operation
-pub const ENSRNOTIMP = 164;
+    /// DNS server refused query
+    NSRREFUSED = 165,
 
-/// DNS server refused query
-pub const ENSRREFUSED = 165;
+    /// Misformatted DNS query
+    NSRBADQUERY = 166,
 
-/// Misformatted DNS query
-pub const ENSRBADQUERY = 166;
+    /// Misformatted domain name
+    NSRBADNAME = 167,
 
-/// Misformatted domain name
-pub const ENSRBADNAME = 167;
+    /// Unsupported address family
+    NSRBADFAMILY = 168,
 
-/// Unsupported address family
-pub const ENSRBADFAMILY = 168;
+    /// Misformatted DNS reply
+    NSRBADRESP = 169,
 
-/// Misformatted DNS reply
-pub const ENSRBADRESP = 169;
+    /// Could not contact DNS servers
+    NSRCONNREFUSED = 170,
 
-/// Could not contact DNS servers
-pub const ENSRCONNREFUSED = 170;
+    /// Timeout while contacting DNS servers
+    NSRTIMEOUT = 171,
 
-/// Timeout while contacting DNS servers
-pub const ENSRTIMEOUT = 171;
+    /// End of file
+    NSROF = 172,
 
-/// End of file
-pub const ENSROF = 172;
+    /// Error reading file
+    NSRFILE = 173,
 
-/// Error reading file
-pub const ENSRFILE = 173;
+    /// Out of memory
+    NSRNOMEM = 174,
 
-/// Out of memory
-pub const ENSRNOMEM = 174;
+    /// Application terminated lookup
+    NSRDESTRUCTION = 175,
 
-/// Application terminated lookup
-pub const ENSRDESTRUCTION = 175;
+    /// Domain name is too long
+    NSRQUERYDOMAINTOOLONG = 176,
 
-/// Domain name is too long
-pub const ENSRQUERYDOMAINTOOLONG = 176;
+    /// Domain name is too long
+    NSRCNAMELOOP = 177,
 
-/// Domain name is too long
-pub const ENSRCNAMELOOP = 177;
+    _,
+};
