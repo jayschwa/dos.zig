@@ -6,6 +6,15 @@ const FarPtr = @import("../far_ptr.zig").FarPtr;
 pub const Segment = struct {
     selector: u16,
 
+    pub const Register = enum {
+        cs,
+        ds,
+        es,
+        fs,
+        gs,
+        ss,
+    };
+
     pub const Type = enum {
         Code,
         Data,
@@ -21,12 +30,28 @@ pub const Segment = struct {
         return Segment{ .selector = selector };
     }
 
-    pub fn fromRegister(comptime register: []const u8) Segment {
-        return .{
-            .selector = asm ("movw %%" ++ register ++ ", %[selector]"
+    pub fn fromRegister(r: Register) Segment {
+        const selector = switch (r) {
+            .cs => asm ("movw %%cs, %[selector]"
+                : [selector] "=r" (-> u16)
+            ),
+            .ds => asm ("movw %%ds, %[selector]"
+                : [selector] "=r" (-> u16)
+            ),
+            .es => asm ("movw %%es, %[selector]"
+                : [selector] "=r" (-> u16)
+            ),
+            .fs => asm ("movw %%fs, %[selector]"
+                : [selector] "=r" (-> u16)
+            ),
+            .gs => asm ("movw %%gs, %[selector]"
+                : [selector] "=r" (-> u16)
+            ),
+            .ss => asm ("movw %%ss, %[selector]"
                 : [selector] "=r" (-> u16)
             ),
         };
+        return .{ .selector = selector };
     }
 
     pub fn farPtr(self: Segment) FarPtr {

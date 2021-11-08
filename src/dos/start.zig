@@ -24,8 +24,8 @@ fn _start() callconv(.Naked) noreturn {
     );
 
     // Initialize transfer buffer from stub info.
-    const stub_info = Segment.fromRegister("fs").farPtr().
-        reader().readStruct(StubInfo) catch unreachable;
+    const stub_info = Segment.fromRegister(.fs).farPtr()
+        .reader().readStruct(StubInfo) catch unreachable;
     system.transfer_buffer = .{
         .protected_mode_segment = .{
             .selector = stub_info.ds_selector,
