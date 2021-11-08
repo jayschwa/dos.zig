@@ -16,8 +16,8 @@ pub const Segment = struct {
     };
 
     pub const Type = enum {
-        Code,
-        Data,
+        code,
+        data,
     };
 
     pub fn alloc() Segment {
@@ -75,8 +75,8 @@ pub const Segment = struct {
         // TODO: Represent rights with packed struct?
         // TODO: Is hardcoding the privilege level bad?
         const rights: u16 = switch (seg_type) {
-            .Code => 0xc0fb, // 32-bit, ring 3, big, code, non-conforming, readable
-            .Data => 0xc0f3, // 32-bit, ring 3, big, data, R/W, expand-up
+            .code => 0xc0fb, // 32-bit, ring 3, big, code, non-conforming, readable
+            .data => 0xc0f3, // 32-bit, ring 3, big, data, R/W, expand-up
         };
         // TODO: Check carry flag for error.
         asm volatile ("int $0x31"
