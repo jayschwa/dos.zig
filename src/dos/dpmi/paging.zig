@@ -4,8 +4,8 @@ pub fn getPageSize() usize {
     // TODO: Check carry flag for error.
     asm volatile ("int $0x31"
         : [_] "={bx}" (high),
-          [_] "={cx}" (low)
-        : [func] "{ax}" (@as(u16, 0x604))
+          [_] "={cx}" (low),
+        : [func] "{ax}" (@as(u16, 0x604)),
         : "cc"
     );
     return @as(usize, high) << 16 | low;

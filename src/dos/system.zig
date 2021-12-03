@@ -58,7 +58,7 @@ pub fn exit(status: u8) noreturn {
     const func: u16 = 0x4c00;
     asm volatile ("int $0x21"
         : // No outputs
-        : [_] "{ax}" (func | status)
+        : [_] "{ax}" (func | status),
     );
     unreachable;
 }

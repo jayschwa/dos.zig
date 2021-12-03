@@ -23,9 +23,9 @@ pub const Segment = struct {
     pub fn alloc() Segment {
         // TODO: Check carry flag for error.
         const selector = asm volatile ("int $0x31"
-            : [_] "={ax}" (-> u16)
+            : [_] "={ax}" (-> u16),
             : [func] "{ax}" (@as(u16, 0)),
-              [_] "{cx}" (@as(u16, 1))
+              [_] "{cx}" (@as(u16, 1)),
         );
         return Segment{ .selector = selector };
     }
@@ -33,22 +33,22 @@ pub const Segment = struct {
     pub fn fromRegister(r: Register) Segment {
         const selector = switch (r) {
             .cs => asm ("movw %%cs, %[selector]"
-                : [selector] "=r" (-> u16)
+                : [selector] "=r" (-> u16),
             ),
             .ds => asm ("movw %%ds, %[selector]"
-                : [selector] "=r" (-> u16)
+                : [selector] "=r" (-> u16),
             ),
             .es => asm ("movw %%es, %[selector]"
-                : [selector] "=r" (-> u16)
+                : [selector] "=r" (-> u16),
             ),
             .fs => asm ("movw %%fs, %[selector]"
-                : [selector] "=r" (-> u16)
+                : [selector] "=r" (-> u16),
             ),
             .gs => asm ("movw %%gs, %[selector]"
-                : [selector] "=r" (-> u16)
+                : [selector] "=r" (-> u16),
             ),
             .ss => asm ("movw %%ss, %[selector]"
-                : [selector] "=r" (-> u16)
+                : [selector] "=r" (-> u16),
             ),
         };
         return .{ .selector = selector };
@@ -64,9 +64,9 @@ pub const Segment = struct {
         // TODO: Check carry flag for error.
         asm ("int $0x31"
             : [_] "={cx}" (addr_high),
-              [_] "={dx}" (addr_low)
+              [_] "={dx}" (addr_low),
             : [func] "{ax}" (@as(u16, 6)),
-              [_] "{bx}" (self.selector)
+              [_] "{bx}" (self.selector),
         );
         return @as(usize, addr_high) << 16 | addr_low;
     }
@@ -83,7 +83,7 @@ pub const Segment = struct {
             : // No outputs
             : [func] "{ax}" (@as(u16, 9)),
               [_] "{bx}" (self.selector),
-              [_] "{cx}" (rights)
+              [_] "{cx}" (rights),
         );
     }
 
@@ -94,7 +94,7 @@ pub const Segment = struct {
             : [func] "{ax}" (@as(u16, 7)),
               [_] "{bx}" (self.selector),
               [_] "{cx}" (@truncate(u16, addr >> 16)),
-              [_] "{dx}" (@truncate(u16, addr))
+              [_] "{dx}" (@truncate(u16, addr)),
         );
     }
 
@@ -106,7 +106,7 @@ pub const Segment = struct {
             : [func] "{ax}" (@as(u16, 8)),
               [_] "{bx}" (self.selector),
               [_] "{cx}" (@truncate(u16, limit >> 16)),
-              [_] "{dx}" (@truncate(u16, limit))
+              [_] "{dx}" (@truncate(u16, limit)),
         );
     }
 

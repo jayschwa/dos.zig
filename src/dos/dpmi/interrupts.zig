@@ -39,11 +39,11 @@ pub fn simulateInterruptWithStack(interrupt: u8, registers: *RealModeRegisters, 
         \\ pushfw
         \\ popw %[flags]
         : [flags] "=r" (-> u16),
-          [errno] "={ax}" (errno)
+          [errno] "={ax}" (errno),
         : [_] "{ax}" (@as(u16, 0x300)),
           [_] "{bx}" (interrupt),
           [_] "{cx}" (stack_words),
-          [_] "{edi}" (registers)
+          [_] "{edi}" (registers),
         : "cc", "memory"
     );
     if (flags & 1 != 0)

@@ -19,9 +19,9 @@ pub const DosMemBlock = struct {
             \\ popw %[flags]
             : [flags] "=r" (-> u16),
               [_] "={ax}" (real_segment),
-              [_] "={dx}" (protected_selector)
+              [_] "={dx}" (protected_selector),
             : [_] "{ax}" (@as(u16, 0x100)),
-              [_] "{bx}" (aligned_size / 16)
+              [_] "{bx}" (aligned_size / 16),
             : "cc"
         );
         // TODO: Better error handling.
@@ -63,10 +63,10 @@ pub const ExtMemBlock = struct {
               [_] "={bx}" (bx),
               [_] "={cx}" (cx),
               [_] "={si}" (si),
-              [_] "={di}" (di)
+              [_] "={di}" (di),
             : [_] "{ax}" (@as(u16, 0x501)),
               [_] "{bx}" (@truncate(u16, size >> 16)),
-              [_] "{cx}" (@truncate(u16, size))
+              [_] "{cx}" (@truncate(u16, size)),
         );
         // TODO: Better error handling.
         if (flags & 1 != 0) return error.DpmiAllocError;

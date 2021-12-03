@@ -19,7 +19,7 @@ fn _start() callconv(.Naked) noreturn {
         \\ mov %%dx, %%es
         \\ mov %%dx, %%ss
         :
-        : [_] "{esp}" (&_stack_ptr)
+        : [_] "{esp}" (&_stack_ptr),
         : "dx", "ds", "es", "ss"
     );
 

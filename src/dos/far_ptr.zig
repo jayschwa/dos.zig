@@ -11,10 +11,10 @@ pub const FarPtr = packed struct {
             \\ lfsl (%[far_ptr]), %%esi
             \\ rep movsb %%fs:(%%esi), %%es:(%%edi)
             \\ pop %%fs
-            : [_] "={esi}" (-> usize)
+            : [_] "={esi}" (-> usize),
             : [far_ptr] "r" (self),
               [_] "{ecx}" (buffer.len),
-              [_] "{edi}" (buffer.ptr)
+              [_] "{edi}" (buffer.ptr),
             : "cc", "ecx", "edi", "memory"
         );
     }
@@ -26,10 +26,10 @@ pub const FarPtr = packed struct {
             \\ lesl (%[far_ptr]), %%edi
             \\ rep movsb %%ds:(%%esi), %%es:(%%edi)
             \\ pop %%es
-            : [_] "={edi}" (-> usize)
+            : [_] "={edi}" (-> usize),
             : [far_ptr] "r" (self),
               [_] "{ecx}" (bytes.len),
-              [_] "{esi}" (bytes.ptr)
+              [_] "{esi}" (bytes.ptr),
             : "cc", "ecx", "esi", "memory"
         );
     }

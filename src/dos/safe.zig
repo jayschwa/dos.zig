@@ -14,7 +14,7 @@ pub fn write(context: void, bytes: []const u8) !usize {
     for (bytes) |byte| asm volatile ("int $0x21"
         : // No outputs
         : [_] "{ah}" (@as(u8, 0x2)),
-          [_] "{dl}" (byte)
+          [_] "{dl}" (byte),
     );
     return bytes.len;
 }
