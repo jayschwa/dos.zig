@@ -5,6 +5,8 @@ const FileSource = std.build.FileSource;
 const InstallDir = std.build.InstallDir;
 const LibExeObjStep = std.build.LibExeObjStep;
 
+const FileRecipeStep = @import("src/build/FileRecipeStep.zig");
+
 pub fn build(b: *Builder) !void {
     const mode = switch (b.standardReleaseOptions()) {
         .Debug => .ReleaseSafe, // TODO: Support debug builds.
@@ -23,24 +25,14 @@ pub fn build(b: *Builder) !void {
     coff_exe.single_threaded = true;
     coff_exe.strip = true;
 
-    const install_coff_exe = b.addInstallRaw(coff_exe, "demo.coff");
+    const installed_coff_exe = b.addInstallRaw(coff_exe, "demo.coff");
 
-    var cat_cmd = std.ArrayList(u8).init(b.allocator);
-    defer cat_cmd.deinit();
-
-    // TODO: Host-neutral concatenation.
-    try cat_cmd.writer().print("cat {s} {s} > {s}", .{
-        b.pathFromRoot("deps/cwsdpmi/bin/CWSDSTUB.EXE"),
-        b.getInstallPath(.bin, "demo.coff"),
-        b.getInstallPath(.bin, "demo.exe"),
+    const exe_with_stub = FileRecipeStep.create(b, concatFiles, .bin, "demo.exe", &[_]FileSource{
+        FileSource.relative("deps/cwsdpmi/bin/CWSDSTUB.EXE"),
+        installed_coff_exe.getOutputSource(),
     });
-
-    const add_stub = b.addSystemCommand(&[_][]const u8{
-        "sh", "-c", cat_cmd.items,
-    });
-    add_stub.step.dependOn(&install_coff_exe.step);
     b.pushInstalledFile(.bin, "demo.exe");
-    b.getInstallStep().dependOn(&add_stub.step);
+    b.getInstallStep().dependOn(&exe_with_stub.step);
 
     const run_in_dosbox = b.addSystemCommand(&[_][]const u8{
         "dosbox", b.getInstallPath(.bin, "demo.exe"),
@@ -49,4 +41,8 @@ pub fn build(b: *Builder) !void {
 
     const run = b.step("run", "Run the demo program in DOSBox");
     run.dependOn(&run_in_dosbox.step);
+}
+
+fn concatFiles(_: *Builder, inputs: []std.fs.File, output: std.fs.File) !void {
+    for (inputs) |input| try output.writeFileAll(input, .{});
 }
