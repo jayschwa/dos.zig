@@ -32,13 +32,11 @@ pub fn build(b: *Builder) !void {
         installed_coff_exe.getOutputSource(),
     };
     const exe_with_stub = FileRecipeStep.create(b, concatFiles, concat_inputs, .bin, "demo.exe");
-    b.pushInstalledFile(.bin, "demo.exe");
     b.getInstallStep().dependOn(&exe_with_stub.step);
+    b.pushInstalledFile(.bin, "demo.exe");
 
-    const run_in_dosbox = b.addSystemCommand(&[_][]const u8{
-        "dosbox", b.getInstallPath(.bin, "demo.exe"),
-    });
-    run_in_dosbox.step.dependOn(b.getInstallStep());
+    const run_in_dosbox = b.addSystemCommand(&[_][]const u8{"dosbox"});
+    run_in_dosbox.addFileSourceArg(exe_with_stub.getOutputSource());
 
     const run = b.step("run", "Run the demo program in DOSBox");
     run.dependOn(&run_in_dosbox.step);
