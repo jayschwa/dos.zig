@@ -14,7 +14,7 @@ const Self = @This();
 
 pub const base_id = .custom;
 
-const Recipe = fn (*Builder, []File, File) anyerror!void;
+const Recipe = fn (*Builder, inputs: []File, output: File) anyerror!void;
 
 step: Step,
 builder: *Builder,
@@ -24,7 +24,7 @@ output_dir: InstallDir,
 output_name: []const u8,
 output_file: GeneratedFile,
 
-pub fn create(builder: *Builder, recipe: Recipe, output_dir: InstallDir, output_name: []const u8, input_sources: []FileSource) *Self {
+pub fn create(builder: *Builder, recipe: Recipe, input_sources: []FileSource, output_dir: InstallDir, output_name: []const u8) *Self {
     const self = builder.allocator.create(Self) catch unreachable;
     self.* = .{
         .step = Step.init(base_id, builder.fmt("file recipe", .{}), builder.allocator, make),

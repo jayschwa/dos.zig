@@ -27,10 +27,11 @@ pub fn build(b: *Builder) !void {
 
     const installed_coff_exe = b.addInstallRaw(coff_exe, "demo.coff");
 
-    const exe_with_stub = FileRecipeStep.create(b, concatFiles, .bin, "demo.exe", &[_]FileSource{
+    const concat_inputs = &[_]FileSource{
         FileSource.relative("deps/cwsdpmi/bin/CWSDSTUB.EXE"),
         installed_coff_exe.getOutputSource(),
-    });
+    };
+    const exe_with_stub = FileRecipeStep.create(b, concatFiles, concat_inputs, .bin, "demo.exe");
     b.pushInstalledFile(.bin, "demo.exe");
     b.getInstallStep().dependOn(&exe_with_stub.step);
 
