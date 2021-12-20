@@ -25,7 +25,7 @@ pub fn build(b: *Builder) !void {
     coff_exe.single_threaded = true;
     coff_exe.strip = true;
 
-    const installed_coff_exe = b.addInstallRaw(coff_exe, "demo.coff");
+    const installed_coff_exe = b.addInstallRaw(coff_exe, "demo.coff", .{});
 
     const concat_inputs = &[_]FileSource{
         FileSource.relative("deps/cwsdpmi/bin/CWSDSTUB.EXE"),
