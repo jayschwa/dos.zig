@@ -114,6 +114,14 @@ pub fn write(handle: fd_t, buf: [*]const u8, count: usize) u16 {
     return regs.ax();
 }
 
+pub fn fsync(handle: fd_t) u16 {
+    const regs = int21(.{
+        .eax = 0x6800,
+        .ebx = handle,
+    });
+    return regs.ax();
+}
+
 pub fn lseek(handle: fd_t, offset: off_t, whence: u8) off_t {
     const regs = int21(.{
         .eax = @as(u16, 0x4200) | whence,
