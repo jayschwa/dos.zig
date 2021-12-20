@@ -4,30 +4,30 @@ pub const FarPtr = packed struct {
     offset: usize = 0,
     segment: u16,
 
-    pub fn read(self: *FarPtr, buffer: []u8) void {
-        self.offset = asm volatile (
+    pub fn read(self: FarPtr, buffer: []u8) void {
+        _ = asm volatile (
             \\ cld
             \\ push %%fs
             \\ lfsl (%[far_ptr]), %%esi
             \\ rep movsb %%fs:(%%esi), %%es:(%%edi)
             \\ pop %%fs
-            : [_] "={esi}" (-> usize),
-            : [far_ptr] "r" (self),
+            : [_] "=&{esi}" (-> usize),
+            : [far_ptr] "r" (&self),
               [_] "{ecx}" (buffer.len),
               [_] "{edi}" (buffer.ptr),
             : "cc", "ecx", "edi", "memory"
         );
     }
 
-    pub fn write(self: *FarPtr, bytes: []const u8) void {
-        self.offset = asm volatile (
+    pub fn write(self: FarPtr, bytes: []const u8) void {
+        _ = asm volatile (
             \\ cld
             \\ push %%es
             \\ lesl (%[far_ptr]), %%edi
             \\ rep movsb %%ds:(%%esi), %%es:(%%edi)
             \\ pop %%es
-            : [_] "={edi}" (-> usize),
-            : [far_ptr] "r" (self),
+            : [_] "=&{edi}" (-> usize),
+            : [far_ptr] "r" (&self),
               [_] "{ecx}" (bytes.len),
               [_] "{esi}" (bytes.ptr),
             : "cc", "ecx", "esi", "memory"
@@ -47,11 +47,13 @@ pub const FarPtr = packed struct {
 
     fn readForReader(self: *FarPtr, buffer: []u8) !usize {
         self.read(buffer);
+        self.offset += buffer.len;
         return buffer.len;
     }
 
     fn writeForWriter(self: *FarPtr, bytes: []const u8) !usize {
         self.write(bytes);
+        self.offset += bytes.len;
         return bytes.len;
     }
 };
