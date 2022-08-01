@@ -92,14 +92,16 @@ SECTIONS {
         SHORT(0)            /* Line number count */
         LONG(0x80)          /* Flags */
     }
-    .text : {
+    .text : ALIGN(4) {
         *(.text*)
+        . = ALIGN(4);
     }
-    .data : {
+    .data : ALIGN(4) {
         *(.rodata*)
         *(.data*)
+        . = ALIGN(4);
     }
-    .bss : {
+    .bss : ALIGN(4) {
         *(.bss*)
         . += _stack_size;
         . = ALIGN(16);
