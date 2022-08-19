@@ -16,15 +16,24 @@ pub const base_id = .custom;
 
 const Recipe = fn (*Builder, inputs: []File, output: File) anyerror!void;
 
+// Workaround to support both stage 1 and self-hosted Zig compilers.
+const RecipePtr = if (@import("builtin").zig_backend == .stage1) Recipe else *const Recipe;
+
 step: Step,
 builder: *Builder,
-recipe: Recipe,
+recipe: RecipePtr,
 input_sources: []FileSource,
 output_dir: InstallDir,
 output_name: []const u8,
 output_file: GeneratedFile,
 
-pub fn create(builder: *Builder, recipe: Recipe, input_sources: []FileSource, output_dir: InstallDir, output_name: []const u8) *Self {
+pub fn create(
+    builder: *Builder,
+    recipe: RecipePtr,
+    input_sources: []FileSource,
+    output_dir: InstallDir,
+    output_name: []const u8,
+) *Self {
     const self = builder.allocator.create(Self) catch unreachable;
     self.* = .{
         .step = Step.init(base_id, builder.fmt("file recipe", .{}), builder.allocator, make),
