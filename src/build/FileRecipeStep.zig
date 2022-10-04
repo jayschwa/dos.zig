@@ -17,7 +17,7 @@ pub const base_id = .custom;
 const Recipe = fn (*Builder, inputs: []File, output: File) anyerror!void;
 
 // Workaround to support both stage 1 and self-hosted Zig compilers.
-const RecipePtr = if (@import("builtin").zig_backend == .stage1) Recipe else *const Recipe;
+const RecipePtr = if (@hasDecl(std.meta, "FnPtr")) std.meta.FnPtr(Recipe) else Recipe;
 
 step: Step,
 builder: *Builder,

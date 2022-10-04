@@ -20,7 +20,7 @@ pub fn build(b: *Builder) !void {
     coff_exe.setLinkerScriptPath(FileSource.relative("src/djcoff.ld"));
     coff_exe.setTarget(try CrossTarget.parse(.{
         .arch_os_abi = "i386-other-none",
-        .cpu_features = "i386",
+        .cpu_features = "generic",
     }));
     coff_exe.single_threaded = true;
     coff_exe.strip = true;
