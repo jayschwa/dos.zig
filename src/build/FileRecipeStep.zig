@@ -15,9 +15,7 @@ const Self = @This();
 pub const base_id = .custom;
 
 const Recipe = fn (*Builder, inputs: []File, output: File) anyerror!void;
-
-// Workaround to support both stage 1 and self-hosted Zig compilers.
-const RecipePtr = if (@hasDecl(std.meta, "FnPtr")) std.meta.FnPtr(Recipe) else Recipe;
+const RecipePtr = std.meta.FnPtr(Recipe);
 
 step: Step,
 builder: *Builder,
