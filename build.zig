@@ -1,6 +1,6 @@
 const std = @import("std");
 const Builder = std.build.Builder;
-const CrossTarget = std.zig.CrossTarget;
+const Cpu = std.Target.Cpu;
 const FileSource = std.build.FileSource;
 const InstallDir = std.build.InstallDir;
 const LibExeObjStep = std.build.LibExeObjStep;
@@ -18,10 +18,13 @@ pub fn build(b: *Builder) !void {
     coff_exe.addPackagePath("dos", "src/dos.zig");
     coff_exe.setBuildMode(mode);
     coff_exe.setLinkerScriptPath(FileSource.relative("src/djcoff.ld"));
-    coff_exe.setTarget(try CrossTarget.parse(.{
-        .arch_os_abi = "i386-other-none",
-        .cpu_features = "generic",
-    }));
+    // NOTE: Zig 0.10 uses "i386" and 0.11 uses "x86".
+    const cpu_arch: Cpu.Arch = if (@hasField(Cpu.Arch, "x86")) .x86 else .i386;
+    coff_exe.setTarget(.{
+        .cpu_arch = cpu_arch,
+        .cpu_model = .{ .explicit = Cpu.Model.generic(cpu_arch) },
+        .os_tag = .other,
+    });
     coff_exe.single_threaded = true;
     coff_exe.strip = true;
 
