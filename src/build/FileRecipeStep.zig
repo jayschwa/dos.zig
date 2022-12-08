@@ -15,11 +15,10 @@ const Self = @This();
 pub const base_id = .custom;
 
 const Recipe = fn (*Builder, inputs: []File, output: File) anyerror!void;
-const RecipePtr = std.meta.FnPtr(Recipe);
 
 step: Step,
 builder: *Builder,
-recipe: RecipePtr,
+recipe: FnPtr(Recipe),
 input_sources: []FileSource,
 output_dir: InstallDir,
 output_name: []const u8,
@@ -27,7 +26,7 @@ output_file: GeneratedFile,
 
 pub fn create(
     builder: *Builder,
-    recipe: RecipePtr,
+    recipe: FnPtr(Recipe),
     input_sources: []FileSource,
     output_dir: InstallDir,
     output_name: []const u8,
@@ -82,4 +81,15 @@ fn make(step: *Step) !void {
 
 test {
     std.testing.refAllDecls(Self);
+}
+
+/// This function returns a function pointer for a given function signature.
+/// It's a helper to make code compatible to both stage1 and stage2 in Zig 0.10.
+/// It originally existed in std.meta, but was removed in Zig 0.11.
+// TODO: Remove FnPtr when Zig 0.11 becomes the minimum required version.
+fn FnPtr(comptime Fn: type) type {
+    return if (@import("builtin").zig_backend != .stage1)
+        *const Fn
+    else
+        Fn;
 }
