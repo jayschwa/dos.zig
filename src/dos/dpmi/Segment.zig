@@ -114,7 +114,7 @@ pub const AccessRights = packed struct {
             conforming: bool = false,
         },
         data: packed struct {
-            writeable: bool,
+            writeable: bool = true,
             expand: enum(u1) { up = 0, down = 1 } = .up,
         },
     },
@@ -162,7 +162,7 @@ test "AccessRights" {
 
     const rw_data: AccessRights = .{
         .type = .data,
-        .flags = .{ .data = .{ .writeable = true } },
+        .flags = .{ .data = .{} },
         .granularity = .page,
     };
     try expectEqual(0xc0f3, @as(u16, @bitCast(rw_data)));
