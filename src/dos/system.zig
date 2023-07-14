@@ -127,7 +127,7 @@ pub fn lseek(handle: fd_t, offset: off_t, whence: u8) off_t {
         .eax = @as(u16, 0x4200) | whence,
         .ebx = handle,
         .ecx = @intCast(u16, offset >> 16),
-        .edx = @intCast(u16, offset),
+        .edx = @truncate(u16, offset),
     });
     return @intCast(off_t, (regs.edx << 16) | regs.ax());
 }
