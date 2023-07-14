@@ -132,14 +132,6 @@ pub fn lseek(handle: fd_t, offset: off_t, whence: u8) off_t {
     return @intCast(off_t, (regs.edx << 16) | regs.ax());
 }
 
-pub fn pread(handle: fd_t, buf: [*]u8, count: usize, offset: u64) u16 {
-    // TODO: Handle errors.
-    const original_offset = lseek(handle, 0, SEEK_CUR);
-    defer _ = lseek(handle, original_offset, SEEK_SET);
-    _ = lseek(handle, @intCast(off_t, offset), SEEK_SET);
-    return read(handle, buf, count);
-}
-
 pub fn sched_yield() void {
     // TODO: Yield via DPMI (if present).
     // See: http://www.delorie.com/djgpp/doc/dpmi/api/2f1680.html
