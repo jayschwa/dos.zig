@@ -65,8 +65,8 @@ pub const ExtMemBlock = struct {
               [_] "={si}" (si),
               [_] "={di}" (di),
             : [_] "{ax}" (@as(u16, 0x501)),
-              [_] "{bx}" (@truncate(u16, size >> 16)),
-              [_] "{cx}" (@truncate(u16, size)),
+              [_] "{bx}" (@as(u16, @truncate(size >> 16))),
+              [_] "{cx}" (@as(u16, @truncate(size))),
         );
         // TODO: Better error handling.
         if (flags & 1 != 0) return error.DpmiAllocError;

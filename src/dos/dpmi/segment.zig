@@ -93,8 +93,8 @@ pub const Segment = struct {
             : // No outputs
             : [func] "{ax}" (@as(u16, 7)),
               [_] "{bx}" (self.selector),
-              [_] "{cx}" (@truncate(u16, addr >> 16)),
-              [_] "{dx}" (@truncate(u16, addr)),
+              [_] "{cx}" (@as(u16, @truncate(addr >> 16))),
+              [_] "{dx}" (@as(u16, @truncate(addr))),
         );
     }
 
@@ -105,8 +105,8 @@ pub const Segment = struct {
             : // No outputs
             : [func] "{ax}" (@as(u16, 8)),
               [_] "{bx}" (self.selector),
-              [_] "{cx}" (@truncate(u16, limit >> 16)),
-              [_] "{dx}" (@truncate(u16, limit)),
+              [_] "{cx}" (@as(u16, @truncate(limit >> 16))),
+              [_] "{dx}" (@as(u16, @truncate(limit))),
         );
     }
 

@@ -2,6 +2,11 @@ const std = @import("std");
 
 pub const os = @import("dos");
 
+// This is necessary to pull in the start code with Zig 0.11.
+comptime {
+    _ = @import("dos");
+}
+
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print("This is a DOS program written in Zig!\r\n", .{});

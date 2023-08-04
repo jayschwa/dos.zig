@@ -21,7 +21,7 @@ pub const RealModeRegisters = extern struct {
     ss: u16 = 0,
 
     pub fn ax(regs: RealModeRegisters) u16 {
-        return @truncate(u16, regs.eax);
+        return @truncate(regs.eax);
     }
 };
 

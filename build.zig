@@ -1,50 +1,51 @@
 const std = @import("std");
-const Builder = std.build.Builder;
+const Build = std.Build;
 const Cpu = std.Target.Cpu;
-const FileSource = std.build.FileSource;
-const InstallDir = std.build.InstallDir;
-const LibExeObjStep = std.build.LibExeObjStep;
 
 const FileRecipeStep = @import("src/build/FileRecipeStep.zig");
 
-pub fn build(b: *Builder) !void {
-    const mode = switch (b.standardReleaseOptions()) {
+pub fn build(b: *Build) !void {
+    const optimize = switch (b.standardOptimizeOption(.{})) {
         .Debug => .ReleaseSafe, // TODO: Support debug builds.
-        else => |mode| mode,
+        else => |opt| opt,
     };
 
-    const coff_exe = b.addExecutable("demo", "src/demo.zig");
-    coff_exe.disable_stack_probing = true;
-    coff_exe.addPackagePath("dos", "src/dos.zig");
-    coff_exe.setBuildMode(mode);
-    coff_exe.setLinkerScriptPath(FileSource.relative("src/djcoff.ld"));
-    // NOTE: Zig 0.10 uses "i386" and 0.11 uses "x86".
-    const cpu_arch: Cpu.Arch = if (@hasField(Cpu.Arch, "x86")) .x86 else .i386;
-    coff_exe.setTarget(.{
-        .cpu_arch = cpu_arch,
-        .cpu_model = .{ .explicit = Cpu.Model.generic(cpu_arch) },
-        .os_tag = .other,
+    const demo_coff = b.addExecutable(.{
+        .name = "demo",
+        .target = .{
+            .cpu_arch = .x86,
+            .cpu_model = .{ .explicit = Cpu.Model.generic(.x86) },
+            .os_tag = .other,
+        },
+        .optimize = optimize,
+        .root_source_file = .{ .path = "src/demo.zig" },
+        .single_threaded = true,
     });
-    coff_exe.single_threaded = true;
-    coff_exe.strip = true;
 
-    const installed_coff_exe = b.addInstallRaw(coff_exe, "demo.coff", .{ .format = .bin });
+    demo_coff.addModule("dos", b.addModule("dos", .{
+        .source_file = .{ .path = "src/dos.zig" },
+    }));
 
-    const concat_inputs = &[_]FileSource{
-        FileSource.relative("deps/cwsdpmi/bin/CWSDSTUB.EXE"),
-        installed_coff_exe.getOutputSource(),
+    demo_coff.setLinkerScriptPath(.{ .path = "src/djcoff.ld" });
+    demo_coff.disable_stack_probing = true;
+    demo_coff.strip = true;
+
+    const demo_exe_inputs = [_]Build.LazyPath{
+        .{ .path = "deps/cwsdpmi/bin/CWSDSTUB.EXE" },
+        demo_coff.addObjCopy(.{ .format = .bin }).getOutput(),
     };
-    const exe_with_stub = FileRecipeStep.create(b, concatFiles, concat_inputs, .bin, "demo.exe");
-    b.getInstallStep().dependOn(&exe_with_stub.step);
-    b.pushInstalledFile(.bin, "demo.exe");
+    const demo_exe = FileRecipeStep.create(b, concatFiles, &demo_exe_inputs, .bin, "demo.exe");
+
+    const installed_demo = b.addInstallBinFile(demo_exe.getOutput(), "demo.exe");
+    b.getInstallStep().dependOn(&installed_demo.step);
 
     const run_in_dosbox = b.addSystemCommand(&[_][]const u8{"dosbox"});
-    run_in_dosbox.addFileSourceArg(exe_with_stub.getOutputSource());
+    run_in_dosbox.addFileArg(installed_demo.source);
 
     const run = b.step("run", "Run the demo program in DOSBox");
     run.dependOn(&run_in_dosbox.step);
 }
 
-fn concatFiles(_: *Builder, inputs: []std.fs.File, output: std.fs.File) !void {
+fn concatFiles(_: *Build, inputs: []std.fs.File, output: std.fs.File) !void {
     for (inputs) |input| try output.writeFileAll(input, .{});
 }

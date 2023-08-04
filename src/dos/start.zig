@@ -23,6 +23,14 @@ fn _start() callconv(.Naked) noreturn {
         : "dx", "ds", "es", "ss"
     );
 
+    asm volatile (
+        \\ jmp %[start:P]
+        :
+        : [start] "X" (&start),
+    );
+}
+
+fn start() noreturn {
     // Initialize transfer buffer from stub info.
     var stub_info_ptr = Segment.fromRegister(.fs).farPtr();
     const stub_info = stub_info_ptr.reader().readStruct(StubInfo) catch unreachable;

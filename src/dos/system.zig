@@ -86,7 +86,7 @@ pub fn close(handle: fd_t) void {
 }
 
 pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
-    const len = std.math.min(count, transfer_buffer.len);
+    const len = @min(count, transfer_buffer.len);
     const regs = int21(.{
         .eax = 0x3f00,
         .ebx = handle,
@@ -102,7 +102,7 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
 }
 
 pub fn write(handle: fd_t, buf: [*]const u8, count: usize) u16 {
-    const len = std.math.min(count, transfer_buffer.len);
+    const len = @min(count, transfer_buffer.len);
     transfer_buffer.write(buf[0..len]);
     const regs = int21(.{
         .eax = 0x4000,
@@ -126,10 +126,10 @@ pub fn lseek(handle: fd_t, offset: off_t, whence: u8) off_t {
     const regs = int21(.{
         .eax = @as(u16, 0x4200) | whence,
         .ebx = handle,
-        .ecx = @intCast(u16, offset >> 16),
-        .edx = @truncate(u16, offset),
+        .ecx = @as(u16, @intCast(offset >> 16)),
+        .edx = @as(u16, @truncate(offset)),
     });
-    return @intCast(off_t, (regs.edx << 16) | regs.ax());
+    return @intCast((regs.edx << 16) | regs.ax());
 }
 
 pub fn sched_yield() void {
