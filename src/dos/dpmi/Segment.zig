@@ -12,9 +12,9 @@ selector: u16,
 pub fn create() Segment {
     // TODO: Check carry flag for error.
     const selector = asm volatile ("int $0x31"
-        : [_] "={ax}" (-> u16),
+        : [selector] "={ax}" (-> u16),
         : [func] "{ax}" (@as(u16, 0)),
-          [_] "{cx}" (@as(u16, 1)),
+          [count] "{cx}" (@as(u16, 1)),
     );
     return .{ .selector = selector };
 }
@@ -27,6 +27,17 @@ pub fn destroy(self: Segment) void {
           [selector] "{bx}" (self.selector),
         : "cc"
     );
+}
+
+pub fn fromRealMode(addr: u16) Segment {
+    // TODO: Check carry flag for error.
+    const selector = asm volatile ("int $0x31"
+        : [selector] "={ax}" (-> u16),
+        : [func] "{ax}" (@as(u16, 2)),
+          [addr] "{bx}" (addr),
+        : "cc"
+    );
+    return .{ .selector = selector };
 }
 
 pub const Register = enum {
