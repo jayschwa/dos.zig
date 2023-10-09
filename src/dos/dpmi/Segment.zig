@@ -2,7 +2,8 @@
 //
 // See: http://www.delorie.com/djgpp/doc/dpmi/descriptor-rules.html
 
-const FarPtr = @import("../far_ptr.zig").FarPtr;
+const std = @import("std");
+const expectEqual = std.testing.expectEqual;
 
 selector: u16,
 
@@ -78,18 +79,44 @@ pub fn setLimit(self: Segment, limit: usize) void {
     );
 }
 
-pub const Type = enum {
-    code,
-    data,
+pub const Type = enum(u2) {
+    system = 0b00,
+    data = 0b10,
+    code = 0b11,
 };
 
-pub fn setAccessRights(self: Segment, seg_type: Segment.Type) void {
-    // TODO: Represent rights with packed struct?
-    // TODO: Is hardcoding the privilege level bad?
-    const rights: u16 = switch (seg_type) {
-        .code => 0xc0fb, // 32-bit, ring 3, big, code, non-conforming, readable
-        .data => 0xc0f3, // 32-bit, ring 3, big, data, R/W, expand-up
-    };
+pub const AccessRights = packed struct {
+    accessed: bool = true,
+    flags: packed union {
+        code: packed struct {
+            readable: bool = true,
+            conforming: bool = false,
+        },
+        data: packed struct {
+            writeable: bool,
+            expand: enum(u1) { up = 0, down = 1 } = .up,
+        },
+    },
+    type: Type,
+    privilege_level: u2 = 3,
+    present: bool = true,
+    limit: u4 = 0,
+    user_bit: u1 = 0,
+    reserved: u1 = 0,
+    size: enum(u1) { @"16_bit" = 0, @"32_bit" = 1 } = .@"32_bit",
+    granularity: enum(u1) { byte = 0, page = 1 } = .byte,
+};
+
+pub fn getAccessRights(self: Segment) AccessRights {
+    // TODO: Check zero flag for error.
+    const bits = asm ("lar %[selector], %[rights]"
+        : [rights] "=r" (-> u32),
+        : [selector] "rm" (self.selector),
+    );
+    return @bitCast(@as(u16, @truncate(bits >> 8)));
+}
+
+pub fn setAccessRights(self: Segment, rights: AccessRights) void {
     // TODO: Check carry flag for error.
     asm volatile ("int $0x31"
         : // No outputs
@@ -98,6 +125,29 @@ pub fn setAccessRights(self: Segment, seg_type: Segment.Type) void {
           [_] "{cx}" (rights),
     );
 }
+
+test "AccessRights" {
+    const code: AccessRights = .{
+        .type = .code,
+        .flags = .{ .code = .{} },
+    };
+    try expectEqual(0x40fb, @as(u16, @bitCast(code)));
+
+    const ro_data: AccessRights = .{
+        .type = .data,
+        .flags = .{ .data = .{ .writeable = false } },
+    };
+    try expectEqual(0x40f1, @as(u16, @bitCast(ro_data)));
+
+    const rw_data: AccessRights = .{
+        .type = .data,
+        .flags = .{ .data = .{ .writeable = true } },
+        .granularity = .page,
+    };
+    try expectEqual(0xc0f3, @as(u16, @bitCast(rw_data)));
+}
+
+const FarPtr = @import("../far_ptr.zig").FarPtr;
 
 pub fn farPtr(self: Segment) FarPtr {
     return .{ .segment = self.selector };
