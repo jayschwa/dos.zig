@@ -19,6 +19,16 @@ pub fn create() Segment {
     return Segment{ .selector = selector };
 }
 
+pub fn destroy(self: Segment) void {
+    // TODO: Check carry flag for error.
+    asm volatile ("int $0x31"
+        : // No outputs
+        : [func] "{ax}" (@as(u16, 1)),
+          [selector] "{bx}" (self.selector),
+        : "cc"
+    );
+}
+
 pub const Register = enum {
     cs, // Code
     ss, // Stack

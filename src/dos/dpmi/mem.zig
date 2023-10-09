@@ -78,10 +78,13 @@ pub const ExtMemBlock = struct {
     }
 
     pub fn createSegment(self: ExtMemBlock, seg_type: Segment.Type) Segment {
-        const segment = Segment.alloc();
+        const segment = Segment.create();
+        errdefer segment.destroy();
+
         segment.setBaseAddress(self.addr);
         segment.setAccessRights(seg_type);
         segment.setLimit(self.len - 1);
+
         return segment;
     }
 };
