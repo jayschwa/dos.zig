@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub const FarPtr = extern struct {
+pub const FarPtr = packed struct {
     offset: usize = 0,
     segment: u16,
 
@@ -9,7 +9,7 @@ pub const FarPtr = extern struct {
             \\ push %%ds
             \\ lds (%[far_ptr]), %%esi
             \\ cld
-            \\ rep movsb %%ds:(%%esi), %%es:(%%edi)
+            \\ rep movsb
             \\ pop %%ds
             : [_] "=&{esi}" (-> usize),
             : [far_ptr] "r" (&self),
@@ -24,7 +24,7 @@ pub const FarPtr = extern struct {
             \\ push %%es
             \\ les (%[far_ptr]), %%edi
             \\ cld
-            \\ rep movsb %%ds:(%%esi), %%es:(%%edi)
+            \\ rep movsb
             \\ pop %%es
             : [_] "=&{edi}" (-> usize),
             : [far_ptr] "r" (&self),
