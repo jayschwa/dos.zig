@@ -62,6 +62,13 @@ pub const Segment = struct {
         );
     }
 
+    pub fn getLimit(self: Segment) usize {
+        return asm ("lsl %[selector], %[ret]"
+            : [ret] "=r" (-> usize),
+            : [selector] "rm" (self.selector),
+        );
+    }
+
     pub fn setLimit(self: Segment, limit: usize) void {
         // TODO: Check carry flag for error.
         // TODO: Check that limit meets alignment requirements.
