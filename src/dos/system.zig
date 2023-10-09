@@ -28,7 +28,7 @@ pub const SEEK_END = 2;
 pub threadlocal var error_code: u16 = 0;
 
 /// Buffer in DOS memory for transferring data with system calls.
-pub var transfer_buffer: dpmi.DosMemBlock = undefined;
+pub var transfer_buffer: dpmi.DosMemoryBlock = undefined;
 
 fn int21(registers: dpmi.RealModeRegisters) dpmi.RealModeRegisters {
     var regs = registers;

@@ -5,9 +5,9 @@
 const std = @import("std");
 const expectEqual = std.testing.expectEqual;
 
-selector: u16,
-
 const Segment = @This();
+
+selector: u16,
 
 pub fn create() Segment {
     // TODO: Check carry flag for error.
@@ -16,7 +16,7 @@ pub fn create() Segment {
         : [func] "{ax}" (@as(u16, 0)),
           [_] "{cx}" (@as(u16, 1)),
     );
-    return Segment{ .selector = selector };
+    return .{ .selector = selector };
 }
 
 pub fn destroy(self: Segment) void {
