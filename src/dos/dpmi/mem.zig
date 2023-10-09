@@ -9,7 +9,7 @@ pub const DosMemBlock = struct {
     real_mode_segment: u16,
     len: usize,
 
-    pub fn alloc(size: u20) !DosMemBlock {
+    pub fn create(size: u20) !DosMemBlock {
         const aligned_size = std.mem.alignForwardGeneric(@TypeOf(size), size, 16);
         var protected_selector: u16 = 0;
         var real_segment: u16 = 0;
@@ -49,7 +49,7 @@ pub const ExtMemBlock = struct {
     len: usize,
     handle: usize,
 
-    pub fn alloc(size: usize) !ExtMemBlock {
+    pub fn create(size: usize) !ExtMemBlock {
         var bx: u16 = undefined;
         var cx: u16 = undefined;
         var si: u16 = undefined;

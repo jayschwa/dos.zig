@@ -9,7 +9,7 @@ selector: u16,
 
 const Segment = @This();
 
-pub fn alloc() Segment {
+pub fn create() Segment {
     // TODO: Check carry flag for error.
     const selector = asm volatile ("int $0x31"
         : [_] "={ax}" (-> u16),
