@@ -54,10 +54,6 @@ pub const Segment = struct {
         return .{ .selector = selector };
     }
 
-    pub fn farPtr(self: Segment) FarPtr {
-        return .{ .segment = self.selector };
-    }
-
     pub fn getBaseAddress(self: Segment) usize {
         var addr_high: u16 = undefined;
         var addr_low: u16 = undefined;
@@ -69,22 +65,6 @@ pub const Segment = struct {
               [_] "{bx}" (self.selector),
         );
         return @as(usize, addr_high) << 16 | addr_low;
-    }
-
-    pub fn setAccessRights(self: Segment, seg_type: Segment.Type) void {
-        // TODO: Represent rights with packed struct?
-        // TODO: Is hardcoding the privilege level bad?
-        const rights: u16 = switch (seg_type) {
-            .code => 0xc0fb, // 32-bit, ring 3, big, code, non-conforming, readable
-            .data => 0xc0f3, // 32-bit, ring 3, big, data, R/W, expand-up
-        };
-        // TODO: Check carry flag for error.
-        asm volatile ("int $0x31"
-            : // No outputs
-            : [func] "{ax}" (@as(u16, 9)),
-              [_] "{bx}" (self.selector),
-              [_] "{cx}" (rights),
-        );
     }
 
     pub fn setBaseAddress(self: Segment, addr: usize) void {
@@ -108,6 +88,26 @@ pub const Segment = struct {
               [_] "{cx}" (@as(u16, @truncate(limit >> 16))),
               [_] "{dx}" (@as(u16, @truncate(limit))),
         );
+    }
+
+    pub fn setAccessRights(self: Segment, seg_type: Segment.Type) void {
+        // TODO: Represent rights with packed struct?
+        // TODO: Is hardcoding the privilege level bad?
+        const rights: u16 = switch (seg_type) {
+            .code => 0xc0fb, // 32-bit, ring 3, big, code, non-conforming, readable
+            .data => 0xc0f3, // 32-bit, ring 3, big, data, R/W, expand-up
+        };
+        // TODO: Check carry flag for error.
+        asm volatile ("int $0x31"
+            : // No outputs
+            : [func] "{ax}" (@as(u16, 9)),
+              [_] "{bx}" (self.selector),
+              [_] "{cx}" (rights),
+        );
+    }
+
+    pub fn farPtr(self: Segment) FarPtr {
+        return .{ .segment = self.selector };
     }
 
     pub fn read(self: Segment, buffer: []u8) void {
