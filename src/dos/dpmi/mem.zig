@@ -1,6 +1,6 @@
 const std = @import("std");
 const FarPtr = @import("../far_ptr.zig").FarPtr;
-const Segment = @import("segment.zig").Segment;
+const Segment = @import("Segment.zig");
 
 /// DosMemBlock represents an allocated block of memory that resides below the
 /// 1 MiB address in physical memory and is accessible to DOS.
