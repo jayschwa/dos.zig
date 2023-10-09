@@ -7,12 +7,12 @@ pub const Segment = struct {
     selector: u16,
 
     pub const Register = enum {
-        cs,
-        ds,
-        es,
+        cs, // Code
+        ss, // Stack
+        ds, // Data
+        es, // Extra
         fs,
         gs,
-        ss,
     };
 
     pub const Type = enum {
