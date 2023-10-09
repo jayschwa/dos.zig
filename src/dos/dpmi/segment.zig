@@ -30,28 +30,12 @@ pub const Segment = struct {
         return Segment{ .selector = selector };
     }
 
-    pub fn fromRegister(r: Register) Segment {
-        const selector = switch (r) {
-            .cs => asm ("movw %%cs, %[selector]"
-                : [selector] "=r" (-> u16),
-            ),
-            .ds => asm ("movw %%ds, %[selector]"
-                : [selector] "=r" (-> u16),
-            ),
-            .es => asm ("movw %%es, %[selector]"
-                : [selector] "=r" (-> u16),
-            ),
-            .fs => asm ("movw %%fs, %[selector]"
-                : [selector] "=r" (-> u16),
-            ),
-            .gs => asm ("movw %%gs, %[selector]"
-                : [selector] "=r" (-> u16),
-            ),
-            .ss => asm ("movw %%ss, %[selector]"
+    pub fn fromRegister(comptime r: Register) Segment {
+        return .{
+            .selector = asm ("movw %%" ++ @tagName(r) ++ ", %[selector]"
                 : [selector] "=r" (-> u16),
             ),
         };
-        return .{ .selector = selector };
     }
 
     pub fn getBaseAddress(self: Segment) usize {
