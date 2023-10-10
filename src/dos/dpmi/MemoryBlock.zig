@@ -34,7 +34,7 @@ pub fn create(size: usize) !Self {
 
     return .{
         .handle = @as(usize, si) << 16 | di,
-        .address = @as(usize, bx) << 16 | cx,
+        .addr = @as(usize, bx) << 16 | cx,
         .len = size,
     };
 }
