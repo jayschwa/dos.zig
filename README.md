@@ -1,3 +1,9 @@
+**Note**: [Zig 0.12.0 removed "bring your own OS" support](https://ziglang.org/download/0.12.0/release-notes.html#Bring-Your-Own-OS-API-Layer-Regressed)
+from the standard library. This project will remain paused on Zig 0.11.0 until
+a newer Zig release reintroduces BYOS support.
+
+---
+
 # DOS SDK for Zig
 
 Write and cross-compile [DOS](https://wikipedia.org/wiki/DOS) programs with the
@@ -21,7 +27,7 @@ you wish to adapt it for your own needs.
 
 Install:
 
-- [Zig](https://ziglang.org) (version 0.11.0 or newer)
+- [Zig](https://ziglang.org) (version 0.11.0)
 - [DOSBox](https://www.dosbox.com)
 
 Run:
