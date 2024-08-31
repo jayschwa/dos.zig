@@ -30,6 +30,15 @@ Install:
 - [Zig](https://ziglang.org) (version 0.11.0)
 - [DOSBox](https://www.dosbox.com)
 
+Setup submodules:
+
+- Run the command `git submodule init && git submodule update`
+
+Add DOSBox to the path:
+
+- Mac: Add `export PATH="$PATH:/applications/dosbox.app/contents/macos/"` to your `~/.zshrc`.
+- Windows: https://stackoverflow.com/questions/9546324/adding-a-directory-to-the-path-environment-variable-in-windows
+
 Run:
 
 ``` sh
