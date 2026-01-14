@@ -6,14 +6,14 @@ const GeneratedFile = Build.GeneratedFile;
 const InstallDir = Build.InstallDir;
 const Step = Build.Step;
 
-const fs = std.fs;
-const File = fs.File;
+const Io = std.Io;
+const File = Io.File;
 
 const Self = @This();
 
-pub const base_id = .custom;
+pub const base_id: Step.Id = .custom;
 
-const Recipe = *const fn (*Build, inputs: []File, output: File) anyerror!void;
+const Recipe = *const fn (Io, inputs: []File, output: File) anyerror!void;
 
 step: Step,
 recipe: Recipe,
@@ -29,7 +29,7 @@ pub fn create(
     output_dir: InstallDir,
     output_name: []const u8,
 ) *Self {
-    const self = owner.allocator.create(Self) catch unreachable;
+    const self = owner.allocator.create(Self) catch @panic("OOM");
     self.* = .{
         .step = Step.init(.{
             .id = base_id,
@@ -38,7 +38,7 @@ pub fn create(
             .makeFn = make,
         }),
         .recipe = recipe,
-        .input_sources = owner.allocator.alloc(LazyPath, input_sources.len) catch unreachable,
+        .input_sources = owner.allocator.alloc(LazyPath, input_sources.len) catch @panic("OOM"),
         .output_dir = output_dir,
         .output_name = owner.dupe(output_name),
         .output_file = .{ .step = &self.step },
@@ -51,33 +51,38 @@ pub fn create(
 }
 
 pub fn getOutput(self: *const Self) LazyPath {
-    return .{ .generated = &self.output_file };
+    return .{ .generated = .{ .file = &self.output_file } };
 }
 
-fn make(step: *Step, _: *std.Progress.Node) !void {
-    const self = @fieldParentPtr(Self, "step", step);
+fn make(step: *Step, options: Step.MakeOptions) anyerror!void {
+    _ = options;
+    const self: *Self = @fieldParentPtr("step", step);
     const owner = step.owner;
+    const io = owner.graph.io;
+    const gpa = owner.graph.cache.gpa;
 
-    var input_files = try owner.allocator.alloc(File, self.input_sources.len);
-    defer owner.allocator.free(input_files);
+    var input_files = try gpa.alloc(File, self.input_sources.len);
+    defer gpa.free(input_files);
 
     var files_opened: usize = 0;
     for (self.input_sources, 0..) |source, i| {
-        input_files[i] = try fs.cwd().openFile(source.getPath(owner), .{});
+        const path = source.getPath3(owner, step);
+        input_files[i] = path.root_dir.handle.openFile(io, path.subPathOrDot(), .{}) catch |err| {
+            return step.fail("unable to open '{f}': {t}", .{ path, err });
+        };
         files_opened += 1;
     }
-    defer while (files_opened > 0) {
-        input_files[files_opened - 1].close();
-        files_opened -= 1;
-    };
+    defer for (input_files[0..files_opened]) |f| f.close(io);
 
-    try fs.cwd().makePath(owner.getInstallPath(self.output_dir, ""));
     const output_path = owner.getInstallPath(self.output_dir, self.output_name);
+    try Io.Dir.cwd().createDirPath(io, owner.getInstallPath(self.output_dir, ""));
 
-    var output_file = try fs.cwd().createFile(output_path, .{});
-    defer output_file.close();
+    var output_file = Io.Dir.cwd().createFile(io, output_path, .{}) catch |err| {
+        return step.fail("unable to create '{s}': {t}", .{ output_path, err });
+    };
+    defer output_file.close(io);
 
-    try self.recipe(owner, input_files, output_file);
+    try self.recipe(io, input_files, output_file);
     self.output_file.path = output_path;
 }
 

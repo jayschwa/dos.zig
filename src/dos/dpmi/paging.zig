@@ -6,7 +6,6 @@ pub fn getPageSize() usize {
         : [_] "={bx}" (high),
           [_] "={cx}" (low),
         : [func] "{ax}" (@as(u16, 0x604)),
-        : "cc"
-    );
+        : .{ .cc = true });
     return @as(usize, high) << 16 | low;
 }

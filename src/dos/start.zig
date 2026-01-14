@@ -1,18 +1,16 @@
 const root = @import("root");
-const std = @import("std");
-
-const safe = @import("safe.zig");
-const Segment = @import("dpmi.zig").Segment;
+const dpmi = @import("dpmi.zig");
+const Segment = dpmi.Segment;
 const system = @import("system.zig");
 
 comptime {
-    if (@hasDecl(root, "main")) @export(_start, .{ .name = "_start" });
+    @export(&_start, .{ .name = "_start" });
 }
 
 // Initial stack pointer set by the linker script.
 extern const _stack_ptr: opaque {};
 
-fn _start() callconv(.Naked) noreturn {
+fn _start() callconv(.naked) noreturn {
     // Use the data segment to initialize the extended and stack segments.
     asm volatile (
         \\ mov %%ds, %%dx
@@ -20,8 +18,7 @@ fn _start() callconv(.Naked) noreturn {
         \\ mov %%dx, %%ss
         :
         : [_] "{esp}" (&_stack_ptr),
-        : "dx", "ds", "es", "ss"
-    );
+        : .{ .dx = true, .ds = true, .es = true, .ss = true });
 
     asm volatile (
         \\ jmp %[start:P]
@@ -33,7 +30,7 @@ fn _start() callconv(.Naked) noreturn {
 fn start() noreturn {
     // Initialize transfer buffer from stub info.
     var stub_info_ptr = Segment.fromRegister(.fs).farPtr();
-    const stub_info = stub_info_ptr.reader().readStruct(StubInfo) catch unreachable;
+    const stub_info = stub_info_ptr.readStruct(StubInfo);
     system.transfer_buffer = .{
         .protected_mode_segment = .{
             .selector = stub_info.ds_selector,
@@ -42,7 +39,8 @@ fn start() noreturn {
         .len = stub_info.min_keep,
     };
 
-    std.os.exit(std.start.callMain());
+    root.main();
+    system.exit(0);
 }
 
 const StubInfo = extern struct {
