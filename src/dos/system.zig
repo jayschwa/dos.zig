@@ -63,18 +63,32 @@ pub fn exit(status: u8) noreturn {
     unreachable;
 }
 
-pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) fd_t {
+pub const FileAccessError = error{ Ok, FunctionNumberInvalid, FileNotFound, PathNotFound, TooManyOpenFiles, AcessDenied, AccessCodeInvalid, InvalidPassword, Unknown };
+
+pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) !fd_t {
     _ = mode;
     // TODO: Can mode be reasonably mapped onto DOS 3.1 sharing mode bits?
     // TODO: Use long filename open (int 0x21, ax=0x716c) if it's available.
     const len = std.mem.len(file_path) + 1;
     // TODO: Fail if len exceeds transfer buffer size.
     transfer_buffer.write(file_path[0..len]);
-    const regs = int21(.{
-        .eax = 0x3d00 | (flags & 3),
-        .edx = 0,
-        .ds = transfer_buffer.real_mode_segment,
-    });
+
+    // see http://www.ctyme.com/intr/rb-2779.htm
+    const regs = int21(.{ .eax = 0x3d00 | (flags & 3), .edx = 0, .ds = transfer_buffer.real_mode_segment, .flags = 0 });
+
+    const cf = regs.flags & 1;
+    // see http://www.ctyme.com/intr/rb-3012.htm
+    if (cf > 0)
+        return switch (regs.ax()) {
+            1 => FileAccessError.FunctionNumberInvalid,
+            2 => FileAccessError.FileNotFound,
+            3 => FileAccessError.PathNotFound,
+            4 => FileAccessError.TooManyOpenFiles,
+            5 => FileAccessError.AcessDenied,
+            0x0c => FileAccessError.AccessCodeInvalid,
+            0x56 => FileAccessError.InvalidPassword,
+            else => FileAccessError.Unknown,
+        };
     return regs.ax();
 }
 
