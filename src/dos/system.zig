@@ -63,7 +63,7 @@ pub fn exit(status: u8) noreturn {
     unreachable;
 }
 
-pub const FileAccessError = error{ Ok, FunctionNumberInvalid, FileNotFound, PathNotFound, TooManyOpenFiles, AcessDenied, AccessCodeInvalid, InvalidPassword, Unknown };
+pub const FileAccessError = error{ Ok, FunctionNumberInvalid, FileNotFound, PathNotFound, TooManyOpenFiles, AcessDenied, InvalidHandle, AccessCodeInvalid, InvalidPassword, Unknown };
 
 pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) !fd_t {
     _ = mode;
@@ -92,11 +92,14 @@ pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) !fd_t {
     return regs.ax();
 }
 
-pub fn close(handle: fd_t) void {
-    _ = int21(.{
+pub fn close(handle: fd_t) !void {
+    const regs = int21(.{
         .eax = 0x3e00,
         .ebx = handle,
     });
+    const cf = regs.flags & 1;
+    if (cf > 0)
+        return FileAccessError.InvalidHandle;
 }
 
 pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
