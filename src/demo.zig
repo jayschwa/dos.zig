@@ -1,7 +1,6 @@
 const std = @import("std");
 
 const dos = @import("dos.zig");
-const system = dos.system;
 
 // This is necessary to pull in the start code.
 comptime {
@@ -38,7 +37,7 @@ fn readLine(buf: []u8) ?[]const u8 {
     var read_len: usize = 0;
     while (read_len < buf.len) {
         var byte: u8 = undefined;
-        if (system.read(system.STDIN_FILENO, @ptrCast(&byte), 1) == 0) {
+        if (dos.read(dos.STDIN_FILENO, @ptrCast(&byte), 1) == 0) {
             if (read_len == 0) return null else break;
         }
         if (byte == '\r') break;
@@ -55,5 +54,5 @@ fn readLine(buf: []u8) ?[]const u8 {
 fn print(comptime fmt: []const u8, args: anytype) !void {
     var buf: [128]u8 = undefined;
     const s = try std.fmt.bufPrint(&buf, fmt, args);
-    _ = system.write(system.STDOUT_FILENO, s.ptr, s.len);
+    _ = dos.write(dos.STDOUT_FILENO, s.ptr, s.len);
 }

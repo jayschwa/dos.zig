@@ -1,6 +1,6 @@
 const root = @import("root");
-const Segment = @import("dpmi.zig").Segment;
-const system = @import("system.zig");
+const dos = @import("../dos.zig");
+const Segment = dos.dpmi.Segment;
 
 comptime {
     if (@hasDecl(root, "main")) @export(&_start, .{ .name = "_start" });
@@ -30,7 +30,7 @@ fn start() noreturn {
     // Initialize transfer buffer from stub info.
     var stub_info_ptr = Segment.fromRegister(.fs).farPtr();
     const stub_info = stub_info_ptr.readStruct(StubInfo);
-    system.transfer_buffer = .{
+    dos.transfer_buffer = .{
         .protected_mode_segment = .{
             .selector = stub_info.ds_selector,
         },
@@ -38,8 +38,7 @@ fn start() noreturn {
         .len = stub_info.min_keep,
     };
 
-    root.main() catch system.abort();
-    system.exit(0);
+    dos.exit(if (root.main()) 0 else |_| 1);
 }
 
 const StubInfo = extern struct {
