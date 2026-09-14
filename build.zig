@@ -3,7 +3,8 @@ const Build = std.Build;
 const Cpu = std.Target.Cpu;
 
 pub fn build(b: *Build) void {
-    const emulator_cmd = b.option([]const u8, "emulator", "DOS emulator command name (default: dosbox)") orelse "dosbox";
+    const opt_emulator = b.option([]const u8, "emulator", "DOS emulator executable (default: dosbox)");
+    const default_emulators: []const []const u8 = &.{ "dosbox", "dosbox-x" };
 
     const optimize: std.builtin.OptimizeMode = switch (b.standardOptimizeOption(.{})) {
         .Debug => .ReleaseSafe, // TODO: Support debug builds.
@@ -30,7 +31,7 @@ pub fn build(b: *Build) void {
 
     demo_coff.setLinkerScript(b.path("src/djcoff.ld"));
 
-    // TODO: Remove shim when Zig 0.17.0 is the minimum supported version.
+    // TODO: Remove compatibility shim when Zig 0.17.0 is the minimum supported version.
     const Format = @typeInfo(@FieldType(Build.Step.ObjCopy.Options, "format")).optional.child;
     const demo_bin = demo_coff.addObjCopy(.{ .format = if (@hasField(Format, "binary")) .binary else .bin });
 
@@ -45,13 +46,32 @@ pub fn build(b: *Build) void {
     cat.addFileArg(demo_bin.getOutput());
     const demo_exe = cat.captureStdOut(.{ .basename = "demo.exe" });
 
-    const installed_demo = b.addInstallBinFile(demo_exe, "demo.exe");
-    b.getInstallStep().dependOn(&installed_demo.step);
+    const install_demo = b.addInstallBinFile(demo_exe, "demo.exe");
+    b.getInstallStep().dependOn(&install_demo.step);
 
-    const run_in_emulator = b.addSystemCommand(&.{emulator_cmd});
-    run_in_emulator.addFileArg(demo_exe);
-    run_in_emulator.step.dependOn(&installed_demo.step);
+    // TODO: Remove compatibility shim when Zig 0.17.0 is the minimum supported version.
+    const run_emulator = if (opt_emulator) |emulator|
+        b.addSystemCommand(&.{emulator})
+    else if (@hasDecl(Build, "findProgramLazy")) blk: {
+        const run_emulator = Build.Step.Run.create(b, "run emulator");
+        run_emulator.addFileArg(b.findProgramLazy(.{ .names = default_emulators }));
+        break :blk run_emulator;
+    } else if (b.findProgram(default_emulators, &.{})) |emulator|
+        b.addSystemCommand(&.{emulator})
+    else |err| switch (err) {
+        error.FileNotFound => blk: {
+            const dummy_run = Build.Step.Run.create(b, "run emulator");
+            dummy_run.step.dependOn(&b.addFail("no emulator found; use -Demulator=<name or path>").step);
+            break :blk dummy_run;
+        },
+    };
+    // TODO: Remove compatibility shim when Zig 0.17.0 is the minimum supported version.
+    if (@hasDecl(Build, "getInstallPath"))
+        run_emulator.addArg(b.getInstallPath(.bin, "demo.exe"))
+    else
+        run_emulator.addFileArg(b.graph.path(.install_bin, "demo.exe"));
+    run_emulator.step.dependOn(&install_demo.step);
 
     const run = b.step("run", "Run the demo program in a DOS emulator");
-    run.dependOn(&run_in_emulator.step);
+    run.dependOn(&run_emulator.step);
 }

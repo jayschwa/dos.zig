@@ -21,18 +21,17 @@ you wish to adapt it for your own needs.
 
 Install:
 
-- [Zig](https://ziglang.org) (version 0.16.0)
+- [Zig](https://ziglang.org) (version [0.16.0](https://ziglang.org/download/#release-0.16.0) or greater)
 - [DOSBox](https://www.dosbox.com)
-
-Add DOSBox to the path:
-
-- Mac: Add `export PATH="$PATH:/applications/dosbox.app/contents/macos/"` to your `~/.zshrc`.
-- Windows: https://stackoverflow.com/questions/9546324/adding-a-directory-to-the-path-environment-variable-in-windows
 
 Run:
 
 ``` sh
-zig build run
+zig build run # Runs on `dosbox`
+```
+
+``` sh
+zig build run -Demulator=<name or path>
 ```
 
 ## Design
