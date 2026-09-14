@@ -1,0 +1,21 @@
+.{
+    .name = .dos,
+    .version = "0.0.0",
+    .fingerprint = 0x9bf6ed003ed1ab10, // Changing this has security and trust implications.
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .cwsdpmi = .{
+            // Upstream URL: https://sandmann.dotster.com/cwsdpmi/csdpmi7b.zip
+            .url = "https://github.com/jayschwa/cwsdpmi/releases/download/r7/csdpmi7b.zip",
+            .hash = "N-V-__8AAI7DAQDI0uoOJjCRzjz3ovCnFyXtE20rbYpoHMO4",
+        },
+    },
+    .paths = .{
+        "build",
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "LICENSE",
+        "README.md",
+    },
+}

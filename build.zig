@@ -41,7 +41,7 @@ pub fn build(b: *Build) void {
             .target = b.graph.host,
         }),
     }));
-    cat.addFileArg(b.path("deps/cwsdpmi/bin/CWSDSTUB.EXE"));
+    cat.addFileArg(b.dependency("cwsdpmi", .{}).path("bin/CWSDSTUB.EXE"));
     cat.addFileArg(demo_bin.getOutput());
     const demo_exe = cat.captureStdOut(.{ .basename = "demo.exe" });
 

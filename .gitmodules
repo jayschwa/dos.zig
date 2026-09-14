@@ -1,3 +1,0 @@
-[submodule "deps/cwsdpmi"]
-	path = deps/cwsdpmi
-	url = https://github.com/jayschwa/cwsdpmi.git
