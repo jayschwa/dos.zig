@@ -24,8 +24,7 @@ pub fn create(size: u20) !Self {
           [_] "={dx}" (protected_selector),
         : [_] "{ax}" (@as(u16, 0x100)),
           [_] "{bx}" (aligned_size / 16),
-        : "cc"
-    );
+        : .{ .cc = true });
 
     // TODO: Better error handling.
     if (flags & 1 != 0) return error.DpmiAllocError;

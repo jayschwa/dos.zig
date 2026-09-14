@@ -25,8 +25,7 @@ pub fn destroy(self: Segment) void {
         : // No outputs
         : [func] "{ax}" (@as(u16, 1)),
           [selector] "{bx}" (self.selector),
-        : "cc"
-    );
+        : .{ .cc = true });
 }
 
 pub fn fromRealMode(addr: u16) Segment {
@@ -35,8 +34,7 @@ pub fn fromRealMode(addr: u16) Segment {
         : [selector] "={ax}" (-> u16),
         : [func] "{ax}" (@as(u16, 2)),
           [addr] "{bx}" (addr),
-        : "cc"
-    );
+        : .{ .cc = true });
     return .{ .selector = selector };
 }
 

@@ -1,9 +1,3 @@
-**Note**: [Zig 0.12.0 removed "bring your own OS" support](https://ziglang.org/download/0.12.0/release-notes.html#Bring-Your-Own-OS-API-Layer-Regressed)
-from the standard library. This project will remain paused on Zig 0.11.0 until
-a newer Zig release reintroduces BYOS support.
-
----
-
 # DOS SDK for Zig
 
 Write and cross-compile [DOS](https://wikipedia.org/wiki/DOS) programs with the
@@ -27,7 +21,7 @@ you wish to adapt it for your own needs.
 
 Install:
 
-- [Zig](https://ziglang.org) (version 0.11.0)
+- [Zig](https://ziglang.org) (version 0.16.0)
 - [DOSBox](https://www.dosbox.com)
 
 Setup submodules:
@@ -66,6 +60,7 @@ There are five main components of this package:
 - Parse environment data (command, variables) and hook into standard library abstractions.
 - Implement `mprotect` for stack guard and zero pages.
 - Implement a `page_allocator` for the standard library.
+- Implement the standard library's `Io` interface.
 - Add graphical demo program.
 
 ## Questions and Answers

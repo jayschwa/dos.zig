@@ -44,8 +44,7 @@ pub fn simulateInterruptWithStack(interrupt: u8, registers: *RealModeRegisters, 
           [_] "{bx}" (interrupt),
           [_] "{cx}" (stack_words),
           [_] "{edi}" (registers),
-        : "cc", "memory"
-    );
+        : .{ .cc = true, .memory = true });
     if (flags & 1 != 0)
         return switch (errno) {
             0x8012 => error.LinearMemoryUnavailable,
