@@ -1,6 +1,3 @@
-const std = @import("std");
-const panic = std.debug.panic;
-
 pub const RealModeRegisters = extern struct {
     edi: u32 = undefined,
     esi: u32 = undefined,
@@ -26,9 +23,12 @@ pub const RealModeRegisters = extern struct {
 };
 
 pub fn simulateInterrupt(interrupt: u8, registers: *RealModeRegisters) void {
-    simulateInterruptWithStack(interrupt, registers, 0) catch |err| {
-        // All errors are stack-related and thus unexpected.
-        panic(@src().fn_name ++ " failed with unexpected error: {s}", .{@errorName(err)});
+    simulateInterruptWithStack(interrupt, registers, 0) catch |err| switch (err) {
+        error.LinearMemoryUnavailable,
+        error.PhysicalMemoryUnavailable,
+        error.BackingStoreUnavailable,
+        error.StackTooLarge,
+        => unreachable,
     };
 }
 
@@ -51,6 +51,6 @@ pub fn simulateInterruptWithStack(interrupt: u8, registers: *RealModeRegisters, 
             0x8013 => error.PhysicalMemoryUnavailable,
             0x8014 => error.BackingStoreUnavailable,
             0x8021 => error.StackTooLarge,
-            else => panic(@src().fn_name ++ " failed with unexpected error code: {x}", .{errno}),
+            else => unreachable,
         };
 }
