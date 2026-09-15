@@ -8,26 +8,7 @@ comptime {
     _ = @import("dos/start.zig");
 }
 
-pub const fd_t = u16;
-pub const mode_t = u8;
-pub const off_t = i32;
-
 pub const PATH_MAX = 260;
-
-pub const STDIN_FILENO = 0;
-pub const STDOUT_FILENO = 1;
-pub const STDERR_FILENO = 2;
-
-pub const O_RDONLY = 0;
-pub const O_WRONLY = 1;
-pub const O_RDWR = 2;
-
-pub const SEEK_SET = 0;
-pub const SEEK_CUR = 1;
-pub const SEEK_END = 2;
-
-/// Error code of the last DOS system call.
-pub threadlocal var error_code: u16 = 0;
 
 /// Buffer in DOS memory for transferring data with system calls.
 pub var transfer_buffer: dpmi.DosMemoryBlock = undefined;
@@ -35,10 +16,6 @@ pub var transfer_buffer: dpmi.DosMemoryBlock = undefined;
 fn int21(registers: dpmi.RealModeRegisters) dpmi.RealModeRegisters {
     var regs = registers;
     dpmi.simulateInterrupt(0x21, &regs);
-    error_code = if (regs.flags & 1 != 0)
-        int21(.{ .eax = 0x5900, .ebx = 0 }).ax() // Extended error code.
-    else
-        0;
     return regs;
 }
 
@@ -51,71 +28,181 @@ pub fn exit(status: u8) noreturn {
     unreachable;
 }
 
-pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) fd_t {
-    _ = mode;
-    // TODO: Can mode be reasonably mapped onto DOS 3.1 sharing mode bits?
-    // TODO: Use long filename open (int 0x21, ax=0x716c) if it's available.
-    const len = std.mem.len(file_path) + 1;
-    // TODO: Fail if len exceeds transfer buffer size.
-    transfer_buffer.write(file_path[0..len]);
-    const regs = int21(.{
-        .eax = 0x3d00 | (flags & 3),
-        .edx = 0,
-        .ds = transfer_buffer.real_mode_segment,
-    });
-    return regs.ax();
-}
+// TODO: Move to separate file?
+pub const File = struct {
+    handle: Handle,
 
-pub fn close(handle: fd_t) void {
-    _ = int21(.{
-        .eax = 0x3e00,
-        .ebx = handle,
-    });
-}
+    pub const Handle = u16;
 
-pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
-    const len = @min(count, transfer_buffer.len);
-    const regs = int21(.{
-        .eax = 0x3f00,
-        .ebx = handle,
-        .ecx = len,
-        .edx = 0,
-        .ds = transfer_buffer.real_mode_segment,
-    });
-    const actual_read_len = regs.ax();
-    if (error_code == 0) {
-        transfer_buffer.read(buf[0..actual_read_len]);
+    pub const stdin: File = .{ .handle = 0 };
+    pub const stdout: File = .{ .handle = 1 };
+    pub const stderr: File = .{ .handle = 2 };
+
+    pub const OpenOptions = struct {
+        access: Access = .read_only,
+        share: Share = .compatibility,
+        inherit: bool = true,
+
+        pub const Access = enum(u8) {
+            read_only = 0x00,
+            write_only = 0x01,
+            read_write = 0x02,
+        };
+
+        pub const Share = enum(u8) {
+            compatibility = 0x00,
+            deny_read_write = 0x10,
+            deny_write = 0x20,
+            deny_read = 0x30,
+            deny_none = 0x40,
+        };
+
+        fn int(options: OpenOptions) u8 {
+            return @intFromEnum(options.access) |
+                @intFromEnum(options.share) |
+                @as(u8, if (options.inherit) 0 else 0x80);
+        }
+    };
+
+    pub const OpenError = error{
+        FileNotFound,
+        PathNotFound,
+        TooManyOpenFiles,
+        AccessDenied,
+        InvalidAccess,
+    };
+
+    // https://www.ctyme.com/intr/rb-2779.htm
+    // https://archive.org/details/microsoftmsdospr0000unse/page/275
+    pub fn open(path: []const u8, options: OpenOptions) OpenError!File {
+        transfer_buffer.write(path); // TODO: Bounds check
+        transfer_buffer.writeAt(&.{0}, path.len);
+        const regs = int21(.{
+            .eax = @as(u16, 0x3d00) | options.int(),
+            .edx = 0,
+            .ds = transfer_buffer.real_mode_segment,
+        });
+        return if (regs.carryFlag()) switch (regs.ax()) {
+            0x02 => error.FileNotFound,
+            0x03 => error.PathNotFound,
+            0x04 => error.TooManyOpenFiles,
+            0x05 => error.AccessDenied,
+            0x0c => error.InvalidAccess,
+            else => unreachable,
+        } else .{ .handle = regs.ax() };
     }
-    return actual_read_len;
-}
 
-pub fn write(handle: fd_t, buf: [*]const u8, count: usize) u16 {
-    const len = @min(count, transfer_buffer.len);
-    transfer_buffer.write(buf[0..len]);
-    const regs = int21(.{
-        .eax = 0x4000,
-        .ebx = handle,
-        .ecx = len,
-        .edx = 0,
-        .ds = transfer_buffer.real_mode_segment,
-    });
-    return regs.ax();
-}
+    // https://www.ctyme.com/intr/rb-2782.htm
+    // https://archive.org/details/microsoftmsdospr0000unse/page/277
+    pub fn close(file: File) void {
+        const regs = int21(.{
+            .eax = 0x3e00,
+            .ebx = file.handle,
+        });
+        if (regs.carryFlag()) switch (regs.ax()) {
+            0x06 => invalidHandle(file.handle),
+            else => unreachable,
+        };
+    }
 
-pub fn fsync(handle: fd_t) u16 {
-    const regs = int21(.{
-        .eax = 0x6800,
-        .ebx = handle,
-    });
-    return regs.ax();
-}
+    pub const ReadError = error{
+        AccessDenied,
+    };
 
-pub fn lseek(handle: fd_t, offset: off_t, whence: u8) off_t {
-    const regs = int21(.{
-        .eax = @as(u16, 0x4200) | whence,
-        .ebx = handle,
-        .ecx = @as(u16, @intCast(offset >> 16)),
-        .edx = @as(u16, @truncate(offset)),
-    });
-    return @intCast((regs.edx << 16) | regs.ax());
-}
+    // https://www.ctyme.com/intr/rb-2783.htm
+    // https://archive.org/details/microsoftmsdospr0000unse/page/278
+    pub fn read(file: File, buffer: []u8) ReadError!u16 {
+        // TODO: Decide what to do if `buffer` is larger than the transfer buffer.
+        const regs = int21(.{
+            .eax = 0x3f00,
+            .ebx = file.handle,
+            .ecx = @min(buffer.len, transfer_buffer.len),
+            .edx = 0,
+            .ds = transfer_buffer.real_mode_segment,
+        });
+        return if (regs.carryFlag()) switch (regs.ax()) {
+            0x05 => error.AccessDenied,
+            0x06 => invalidHandle(file.handle),
+            else => unreachable,
+        } else blk: {
+            const len = regs.ax();
+            transfer_buffer.read(buffer[0..len]);
+            break :blk len;
+        };
+    }
+
+    pub const WriteError = error{
+        AccessDenied,
+    };
+
+    // https://www.ctyme.com/intr/rb-2791.htm
+    // archive.org/details/microsoftmsdospr0000unse/page/280
+    pub fn write(file: File, buffer: []const u8) WriteError!u16 {
+        // TODO: Decide what to do if `buffer` is larger than the transfer buffer.
+        const len = @min(buffer.len, transfer_buffer.len);
+        transfer_buffer.write(buffer[0..len]);
+        const regs = int21(.{
+            .eax = 0x4000,
+            .ebx = file.handle,
+            .ecx = len,
+            .edx = 0,
+            .ds = transfer_buffer.real_mode_segment,
+        });
+        return if (regs.carryFlag()) switch (regs.ax()) {
+            0x05 => error.AccessDenied,
+            0x06 => invalidHandle(file.handle),
+            else => unreachable,
+        } else regs.ax();
+    }
+
+    pub const SeekOffset = union(Origin) {
+        start: u32,
+        current: i32,
+        end: i32,
+
+        const Origin = enum(u8) {
+            start = 0x00,
+            current = 0x01,
+            end = 0x02,
+        };
+    };
+
+    // https://www.ctyme.com/intr/rb-2799.htm
+    // https://archive.org/details/microsoftmsdospr0000unse/page/282
+    pub fn seek(file: File, offset: SeekOffset) u32 {
+        const raw_offset: u32 = switch (offset) {
+            .start => |v| v,
+            .current, .end => |v| @bitCast(v),
+        };
+        const regs = int21(.{
+            .eax = @as(u16, 0x4200) | @intFromEnum(offset),
+            .ebx = file.handle,
+            .ecx = raw_offset >> 16,
+            .edx = raw_offset & 0xffff,
+        });
+        return if (regs.carryFlag()) switch (regs.ax()) {
+            0x01 => unreachable, // Bad move method
+            0x06 => invalidHandle(file.handle),
+            else => unreachable,
+        } else (regs.edx << 16) | regs.ax();
+    }
+
+    // https://www.ctyme.com/intr/rb-3170.htm
+    // https://archive.org/details/microsoftmsdospr0000unse/page/390
+    pub fn commit(file: File) !void {
+        // TODO: Should this be named `commit`, `flush`, or `sync`?
+        const regs = int21(.{
+            .eax = 0x6800,
+            .ebx = file.handle,
+        });
+        if (regs.carryFlag()) switch (regs.ax()) {
+            0x06 => invalidHandle(file.handle),
+            else => @panic("FIXME"), // Error set is not well-documented.
+        };
+    }
+
+    fn invalidHandle(handle: Handle) noreturn {
+        _ = handle;
+        @panic("invalid handle");
+    }
+};

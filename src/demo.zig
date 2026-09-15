@@ -34,25 +34,30 @@ fn fib(n: usize) usize {
 
 // TODO: Replace with `std.Io` interface.
 fn readLine(buf: []u8) ?[]const u8 {
-    var read_len: usize = 0;
-    while (read_len < buf.len) {
+    var total_read: usize = 0;
+    while (total_read < buf.len) {
         var byte: u8 = undefined;
-        if (dos.read(dos.STDIN_FILENO, @ptrCast(&byte), 1) == 0) {
-            if (read_len == 0) return null else break;
+        const read_len = dos.File.stdin.read(@ptrCast(&byte)) catch |err| switch (err) {
+            error.AccessDenied => unreachable,
+        };
+        if (read_len == 0) {
+            if (total_read == 0) return null else break;
         }
         if (byte == '\r') break;
         if (byte == '\n') {
-            if (read_len == 0) continue else break;
+            if (total_read == 0) continue else break;
         }
-        buf[read_len] = byte;
-        read_len += 1;
+        buf[total_read] = byte;
+        total_read += 1;
     }
-    return buf[0..read_len];
+    return buf[0..total_read];
 }
 
 // TODO: Replace with `std.Io` interface.
 fn print(comptime fmt: []const u8, args: anytype) !void {
     var buf: [128]u8 = undefined;
     const s = try std.fmt.bufPrint(&buf, fmt, args);
-    _ = dos.write(dos.STDOUT_FILENO, s.ptr, s.len);
+    _ = dos.File.stdout.write(s) catch |err| switch (err) {
+        error.AccessDenied => unreachable,
+    };
 }

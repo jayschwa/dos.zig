@@ -23,6 +23,10 @@ pub const RealModeRegisters = extern struct {
     pub fn ax(regs: RealModeRegisters) u16 {
         return @truncate(regs.eax);
     }
+
+    pub fn carryFlag(regs: RealModeRegisters) bool {
+        return regs.flags & 1 != 0;
+    }
 };
 
 pub fn simulateInterrupt(interrupt: u8, registers: *RealModeRegisters) void {

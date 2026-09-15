@@ -43,3 +43,7 @@ pub fn read(self: Self, buffer: []u8) void {
 pub fn write(self: Self, bytes: []const u8) void {
     return self.protected_mode_segment.write(bytes);
 }
+
+pub fn writeAt(self: Self, bytes: []const u8, offset: usize) void {
+    return self.protected_mode_segment.writeAt(bytes, offset);
+}

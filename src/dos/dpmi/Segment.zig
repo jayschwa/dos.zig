@@ -179,3 +179,7 @@ pub fn read(self: Segment, buffer: []u8) void {
 pub fn write(self: Segment, bytes: []const u8) void {
     return self.farPtr().write(bytes);
 }
+
+pub fn writeAt(self: Segment, bytes: []const u8, offset: usize) void {
+    @as(FarPtr, .{ .segment = self.selector, .offset = offset }).write(bytes);
+}
