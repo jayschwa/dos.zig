@@ -2,6 +2,8 @@ const std = @import("std");
 
 pub const dpmi = @import("dos/dpmi.zig");
 const callRealMode = dpmi.translation.callRealMode;
+const RegisterInput = dpmi.translation.RegisterInput;
+const RegisterOutput = dpmi.translation.RegisterOutput;
 
 // This forces the start.zig file to be imported, and the comptime logic inside that
 // file decides whether to export any appropriate start symbols.
@@ -33,7 +35,7 @@ pub threadlocal var error_code: u16 = 0;
 /// Buffer in DOS memory for transferring data with system calls.
 pub var transfer_buffer: dpmi.DosMemoryBlock = undefined;
 
-fn int21(regs: dpmi.translation.Registers) dpmi.translation.Registers {
+fn int21(regs: RegisterInput) RegisterOutput {
     const regs_out = callRealMode(.{ .interrupt = 0x21 }, regs, .{}) catch |err| switch (err) {
         error.StackCopyWouldOverflow => unreachable,
         error.LinearMemoryUnavailable,
@@ -42,7 +44,7 @@ fn int21(regs: dpmi.translation.Registers) dpmi.translation.Registers {
         => @panic(@errorName(err)),
     };
     error_code = if (regs_out.flags & 1 != 0)
-        int21(.{ .eax = 0x5900, .ebx = 0 }).ax() // Extended error code.
+        int21(.{ .eax = 0x5900, .ebx = 0 }).ax // Extended error code.
     else
         0;
     return regs_out;
@@ -69,7 +71,7 @@ pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) fd_t {
         .edx = 0,
         .ds = transfer_buffer.real_mode_segment,
     });
-    return regs.ax();
+    return regs.ax;
 }
 
 pub fn close(handle: fd_t) void {
@@ -88,7 +90,7 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
         .edx = 0,
         .ds = transfer_buffer.real_mode_segment,
     });
-    const actual_read_len = regs.ax();
+    const actual_read_len = regs.ax;
     if (error_code == 0) {
         transfer_buffer.read(buf[0..actual_read_len]);
     }
@@ -105,7 +107,7 @@ pub fn write(handle: fd_t, buf: [*]const u8, count: usize) u16 {
         .edx = 0,
         .ds = transfer_buffer.real_mode_segment,
     });
-    return regs.ax();
+    return regs.ax;
 }
 
 pub fn fsync(handle: fd_t) u16 {
@@ -113,7 +115,7 @@ pub fn fsync(handle: fd_t) u16 {
         .eax = 0x6800,
         .ebx = handle,
     });
-    return regs.ax();
+    return regs.ax;
 }
 
 pub fn lseek(handle: fd_t, offset: off_t, whence: u8) off_t {
@@ -123,5 +125,5 @@ pub fn lseek(handle: fd_t, offset: off_t, whence: u8) off_t {
         .ecx = @as(u16, @intCast(offset >> 16)),
         .edx = @as(u16, @truncate(offset)),
     });
-    return @intCast((regs.edx << 16) | regs.ax());
+    return @intCast(@as(u32, regs.dx) << 16 | regs.ax);
 }

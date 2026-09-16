@@ -10,7 +10,7 @@ pub const Procedure = struct {
     pub const Address = struct { cs: u16, ip: u16 };
 };
 
-pub const Registers = struct {
+pub const RegisterInput = struct {
     eax: u32 = 0,
     ebx: u32 = 0,
     ecx: u32 = 0,
@@ -23,10 +23,36 @@ pub const Registers = struct {
     fs: u16 = 0,
     gs: u16 = 0,
     flags: u16 = 0,
+};
 
-    pub fn ax(regs: Registers) u16 {
-        return @truncate(regs.eax);
-    }
+pub const RegisterOutput = struct {
+    eax: u32,
+    ax: u16,
+    ah: u8,
+    al: u8,
+    ebx: u32,
+    bx: u16,
+    bh: u8,
+    bl: u8,
+    ecx: u32,
+    cx: u16,
+    ch: u8,
+    cl: u8,
+    edx: u32,
+    dx: u16,
+    dh: u8,
+    dl: u8,
+    esi: u32,
+    si: u16,
+    edi: u32,
+    di: u16,
+    ebp: u32,
+    bp: u16,
+    ds: u16,
+    es: u16,
+    fs: u16,
+    gs: u16,
+    flags: u16,
 };
 
 pub const Stack = struct {
@@ -45,9 +71,9 @@ pub const CallRealModeError = error{
 
 pub fn callRealMode(
     target: Target,
-    registers: Registers,
+    registers: RegisterInput,
     stack: Stack,
-) CallRealModeError!Registers {
+) CallRealModeError!RegisterOutput {
     const dpmi_function: u16 = switch (target) {
         .interrupt => 0x300,
         .procedure => |proc| switch (proc.return_frame) {
@@ -106,12 +132,27 @@ pub fn callRealMode(
         else => unreachable,
     } else .{
         .eax = call_data.eax,
+        .ax = @truncate(call_data.eax),
+        .ah = @truncate(call_data.eax >> 8),
+        .al = @truncate(call_data.eax),
         .ebx = call_data.ebx,
+        .bx = @truncate(call_data.ebx),
+        .bh = @truncate(call_data.ebx >> 8),
+        .bl = @truncate(call_data.ebx),
         .ecx = call_data.ecx,
+        .cx = @truncate(call_data.ecx),
+        .ch = @truncate(call_data.ecx >> 8),
+        .cl = @truncate(call_data.ecx),
         .edx = call_data.edx,
+        .dx = @truncate(call_data.edx),
+        .dh = @truncate(call_data.edx >> 8),
+        .dl = @truncate(call_data.edx),
         .esi = call_data.esi,
+        .si = @truncate(call_data.esi),
         .edi = call_data.edi,
+        .di = @truncate(call_data.edi),
         .ebp = call_data.ebp,
+        .bp = @truncate(call_data.ebp),
         .ds = call_data.ds,
         .es = call_data.es,
         .fs = call_data.fs,
