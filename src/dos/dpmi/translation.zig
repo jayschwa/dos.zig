@@ -1,3 +1,7 @@
+const std = @import("std");
+const FieldEnum = std.meta.FieldEnum;
+const fieldNames = std.meta.fieldNames;
+
 pub const Target = union(enum) {
     interrupt: u8,
     procedure: Procedure,
@@ -23,6 +27,61 @@ pub const RegisterInput = struct {
     fs: u16 = 0,
     gs: u16 = 0,
     flags: u16 = 0,
+
+    pub fn init(values: anytype) RegisterInput {
+        const Values = @TypeOf(values);
+        var regs: RegisterInput = .{};
+        inline for (comptime fieldNames(Values)) |name| {
+            const value = @field(values, name);
+            if (@hasField(RegisterInput, name)) {
+                @field(regs, name) = value;
+            } else if (comptime findGroup(.word, name)) |group| {
+                if (@hasField(Values, group.long)) registerConflict(name, group.long);
+                @field(regs, group.long) = @as(u16, value);
+            } else if (comptime findGroup(.msb, name)) |group| {
+                if (@hasField(Values, group.long)) registerConflict(name, group.long);
+                if (@hasField(Values, group.word)) registerConflict(name, group.word);
+                @field(regs, group.long) |= @as(u16, @as(u8, value)) << 8;
+            } else if (comptime findGroup(.lsb, name)) |group| {
+                if (@hasField(Values, group.long)) registerConflict(name, group.long);
+                if (@hasField(Values, group.word)) registerConflict(name, group.word);
+                @field(regs, group.long) |= @as(u8, value);
+            } else @compileError("unknown register: " ++ name);
+        }
+        return regs;
+    }
+
+    const Group = struct {
+        long: []const u8,
+        word: []const u8,
+        msb: ?[]const u8 = null,
+        lsb: ?[]const u8 = null,
+
+        fn contains(group: Group, field: FieldEnum(Group), name: []const u8) bool {
+            const opt_candidate: ?[]const u8 = @field(group, @tagName(field));
+            return if (opt_candidate) |candidate| std.mem.eql(u8, candidate, name) else false;
+        }
+    };
+
+    const groups = [_]Group{
+        .{ .long = "eax", .word = "ax", .msb = "ah", .lsb = "al" },
+        .{ .long = "ebx", .word = "bx", .msb = "bh", .lsb = "bl" },
+        .{ .long = "ecx", .word = "cx", .msb = "ch", .lsb = "cl" },
+        .{ .long = "edx", .word = "dx", .msb = "dh", .lsb = "dl" },
+        .{ .long = "esi", .word = "si" },
+        .{ .long = "edi", .word = "di" },
+        .{ .long = "ebp", .word = "bp" },
+    };
+
+    fn findGroup(field: FieldEnum(Group), name: []const u8) ?Group {
+        return for (groups) |group| {
+            if (group.contains(field, name)) break group;
+        } else null;
+    }
+
+    fn registerConflict(comptime left: []const u8, comptime right: []const u8) noreturn {
+        @compileError("registers '" ++ left ++ "' and '" ++ right ++ "' cannot coexist");
+    }
 };
 
 pub const RegisterOutput = struct {

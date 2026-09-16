@@ -67,30 +67,31 @@ pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) fd_t {
     const len = std.mem.len(file_path) + 1;
     // TODO: Fail if len exceeds transfer buffer size.
     transfer_buffer.write(file_path[0..len]);
-    const regs = int21(.{
-        .eax = 0x3d00 | (flags & 3),
-        .edx = 0,
+    const regs = int21(.init(.{
+        .ah = 0x3d,
+        .al = @as(u8, @intCast(flags & 3)),
         .ds = transfer_buffer.real_mode_segment,
-    });
+        .dx = 0,
+    }));
     return regs.ax;
 }
 
 pub fn close(handle: fd_t) void {
-    _ = int21(.{
-        .eax = 0x3e00,
-        .ebx = handle,
-    });
+    _ = int21(.init(.{
+        .ah = 0x3e,
+        .bx = handle,
+    }));
 }
 
 pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
     const len = @min(count, transfer_buffer.len, maxInt(u16));
-    const regs = int21(.{
-        .eax = 0x3f00,
-        .ebx = handle,
-        .ecx = len,
-        .edx = 0,
+    const regs = int21(.init(.{
+        .ah = 0x3f,
+        .bx = handle,
+        .cx = len,
         .ds = transfer_buffer.real_mode_segment,
-    });
+        .dx = 0,
+    }));
     const actual_read_len = regs.ax;
     if (error_code == 0) {
         transfer_buffer.read(buf[0..actual_read_len]);
@@ -101,30 +102,32 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
 pub fn write(handle: fd_t, buf: [*]const u8, count: usize) u16 {
     const len = @min(count, transfer_buffer.len, maxInt(u16));
     transfer_buffer.write(buf[0..len]);
-    const regs = int21(.{
-        .eax = 0x4000,
-        .ebx = handle,
-        .ecx = len,
-        .edx = 0,
+    const regs = int21(.init(.{
+        .ah = 0x40,
+        .bx = handle,
+        .cx = len,
         .ds = transfer_buffer.real_mode_segment,
-    });
+        .dx = 0,
+    }));
     return regs.ax;
 }
 
 pub fn fsync(handle: fd_t) u16 {
-    const regs = int21(.{
-        .eax = 0x6800,
-        .ebx = handle,
-    });
+    const regs = int21(.init(.{
+        .ah = 0x68,
+        .bx = handle,
+    }));
     return regs.ax;
 }
 
 pub fn lseek(handle: fd_t, offset: off_t, whence: u8) off_t {
-    const regs = int21(.{
-        .eax = @as(u16, 0x4200) | whence,
-        .ebx = handle,
-        .ecx = @as(u16, @intCast(offset >> 16)),
-        .edx = @as(u16, @truncate(offset)),
-    });
+    const raw_offset: u32 = @bitCast(offset);
+    const regs = int21(.init(.{
+        .ah = 0x42,
+        .al = whence,
+        .bx = handle,
+        .cx = @as(u16, @truncate(raw_offset >> 16)),
+        .dx = @as(u16, @truncate(raw_offset)),
+    }));
     return @intCast(@as(u32, regs.dx) << 16 | regs.ax);
 }
