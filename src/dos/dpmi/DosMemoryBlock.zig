@@ -23,7 +23,7 @@ pub fn create(size: u20) !Self {
           [_] "={ax}" (real_segment),
           [_] "={dx}" (protected_selector),
         : [_] "{ax}" (@as(u16, 0x100)),
-          [_] "{bx}" (aligned_size / 16),
+          [_] "{bx}" (@as(u16, @intCast(aligned_size / 16))),
         : .{ .cc = true });
 
     // TODO: Better error handling.

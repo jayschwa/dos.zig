@@ -196,7 +196,7 @@ pub fn callRealMode(
         : [flags] "=r" (-> Flags),
           [errno] "={ax}" (errno),
         : [_] "{ax}" (dpmi_function),
-          [_] "{bh}" (0),
+          [_] "{bh}" (@as(u8, 0)),
           [_] "{bl}" (real_interrupt),
           [_] "{cx}" (stack.copy_words),
           [_] "{edi}" (&call_data),
