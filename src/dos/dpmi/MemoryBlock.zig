@@ -30,7 +30,7 @@ pub fn create(size: usize) !Self {
     );
 
     // TODO: Better error handling.
-    if (flags & 1 != 0) return error.DpmiAllocError;
+    if (flags.carry) return error.DpmiAllocError;
 
     return .{
         .handle = @as(usize, si) << 16 | di,

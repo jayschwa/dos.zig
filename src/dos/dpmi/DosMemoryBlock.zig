@@ -27,7 +27,7 @@ pub fn create(size: u20) !Self {
         : .{ .cc = true });
 
     // TODO: Better error handling.
-    if (flags & 1 != 0) return error.DpmiAllocError;
+    if (flags.carry) return error.DpmiAllocError;
 
     return .{
         .protected_mode_segment = .{ .selector = protected_selector },

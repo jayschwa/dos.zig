@@ -26,7 +26,7 @@ pub const RegisterInput = struct {
     es: u16 = 0,
     fs: u16 = 0,
     gs: u16 = 0,
-    flags: u16 = 0,
+    flags: Flags = .{},
 
     pub fn init(values: anytype) RegisterInput {
         const Values = @TypeOf(values);
@@ -111,7 +111,25 @@ pub const RegisterOutput = struct {
     es: u16,
     fs: u16,
     gs: u16,
-    flags: u16,
+    flags: Flags,
+};
+
+pub const Flags = packed struct(u16) {
+    carry: bool = false,
+    _reserved_bit_1: u1 = 1,
+    parity: bool = false,
+    _reserved_bit_3: u1 = 0,
+    aux_carry: bool = false,
+    _reserved_bit_5: u1 = 0,
+    zero: bool = false,
+    sign: enum(u1) { positive = 0, negative = 1 } = .positive,
+    trap: bool = false,
+    interrupt: enum(u1) { disable = 0, enable = 1 } = .disable,
+    direction: enum(u1) { up = 0, down = 1 } = .up,
+    overflow: bool = false,
+    io_privilege_level: u2 = 0,
+    nested_task: bool = false,
+    _reserved_bit_15: u1 = 0,
 };
 
 pub const Stack = struct {
@@ -175,7 +193,7 @@ pub fn callRealMode(
         \\ int $0x31
         \\ pushfw
         \\ popw %[flags]
-        : [flags] "=r" (-> u16),
+        : [flags] "=r" (-> Flags),
           [errno] "={ax}" (errno),
         : [_] "{ax}" (dpmi_function),
           [_] "{bh}" (0),
@@ -183,7 +201,7 @@ pub fn callRealMode(
           [_] "{cx}" (stack.copy_words),
           [_] "{edi}" (&call_data),
         : .{ .cc = true, .memory = true });
-    return if (flags & 1 != 0) switch (errno) {
+    return if (flags.carry) switch (errno) {
         0x8012 => error.LinearMemoryUnavailable,
         0x8013 => error.PhysicalMemoryUnavailable,
         0x8014 => error.BackingStoreUnavailable,
@@ -229,7 +247,7 @@ const CallData = extern struct {
     edx: u32,
     ecx: u32,
     eax: u32,
-    flags: u16,
+    flags: Flags,
     es: u16,
     ds: u16,
     fs: u16,

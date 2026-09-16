@@ -44,7 +44,7 @@ fn int21(regs: RegisterInput) RegisterOutput {
         error.BackingStoreUnavailable,
         => @panic(@errorName(err)),
     };
-    error_code = if (regs_out.flags & 1 != 0)
+    error_code = if (regs_out.flags.carry)
         int21(.{ .eax = 0x5900, .ebx = 0 }).ax // Extended error code.
     else
         0;
