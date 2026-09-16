@@ -18,11 +18,11 @@ pub const Registers = struct {
     esi: u32 = 0,
     edi: u32 = 0,
     ebp: u32 = 0,
-    flags: u16 = 0,
-    es: u16 = 0,
     ds: u16 = 0,
+    es: u16 = 0,
     fs: u16 = 0,
     gs: u16 = 0,
+    flags: u16 = 0,
 
     pub fn ax(regs: Registers) u16 {
         return @truncate(regs.eax);
@@ -75,11 +75,11 @@ pub fn callRealMode(
         .esi = registers.esi,
         .edi = registers.edi,
         .ebp = registers.ebp,
-        .flags = registers.flags,
-        .es = registers.es,
         .ds = registers.ds,
+        .es = registers.es,
         .fs = registers.fs,
         .gs = registers.gs,
+        .flags = registers.flags,
         .cs = real_proc_addr.cs,
         .ip = real_proc_addr.ip,
         .ss = stack_addr.ss,
@@ -112,11 +112,11 @@ pub fn callRealMode(
         .esi = call_data.esi,
         .edi = call_data.edi,
         .ebp = call_data.ebp,
-        .flags = call_data.flags,
-        .es = call_data.es,
         .ds = call_data.ds,
+        .es = call_data.es,
         .fs = call_data.fs,
         .gs = call_data.gs,
+        .flags = call_data.flags,
     };
 }
 
