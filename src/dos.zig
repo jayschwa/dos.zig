@@ -1,6 +1,7 @@
 const std = @import("std");
 
 pub const dpmi = @import("dos/dpmi.zig");
+const callRealMode = dpmi.translation.callRealMode;
 
 // This forces the start.zig file to be imported, and the comptime logic inside that
 // file decides whether to export any appropriate start symbols.
@@ -32,14 +33,19 @@ pub threadlocal var error_code: u16 = 0;
 /// Buffer in DOS memory for transferring data with system calls.
 pub var transfer_buffer: dpmi.DosMemoryBlock = undefined;
 
-fn int21(registers: dpmi.RealModeRegisters) dpmi.RealModeRegisters {
-    var regs = registers;
-    dpmi.simulateInterrupt(0x21, &regs);
-    error_code = if (regs.flags & 1 != 0)
+fn int21(regs: dpmi.translation.Registers) dpmi.translation.Registers {
+    const regs_out = callRealMode(.{ .interrupt = 0x21 }, regs, .{}) catch |err| switch (err) {
+        error.StackCopyWouldOverflow => unreachable,
+        error.LinearMemoryUnavailable,
+        error.PhysicalMemoryUnavailable,
+        error.BackingStoreUnavailable,
+        => @panic(@errorName(err)),
+    };
+    error_code = if (regs_out.flags & 1 != 0)
         int21(.{ .eax = 0x5900, .ebx = 0 }).ax() // Extended error code.
     else
         0;
-    return regs;
+    return regs_out;
 }
 
 pub fn exit(status: u8) noreturn {
