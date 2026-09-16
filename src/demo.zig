@@ -2,6 +2,8 @@ const std = @import("std");
 
 const dos = @import("dos.zig");
 
+pub const panic = dos.debug.panic;
+
 // This is necessary to pull in the start code.
 comptime {
     _ = dos;

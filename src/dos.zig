@@ -1,6 +1,7 @@
 const std = @import("std");
 const maxInt = std.math.maxInt;
 
+pub const debug = @import("dos/debug.zig");
 pub const dpmi = @import("dos/dpmi.zig");
 const callRealMode = dpmi.translation.callRealMode;
 const RegisterInput = dpmi.translation.RegisterInput;
@@ -58,6 +59,15 @@ pub fn exit(status: u8) noreturn {
           [_] "{al}" (status),
     );
     unreachable;
+}
+
+// https://www.ctyme.com/intr/rb-2554.htm
+pub fn displayChar(char: u8) void {
+    _ = asm volatile ("int $0x21"
+        : [_] "={al}" (-> u8),
+        : [_] "{ah}" (@as(u8, 0x02)),
+          [_] "{dl}" (char),
+    );
 }
 
 pub fn open(file_path: [*:0]const u8, flags: u32, mode: mode_t) fd_t {
