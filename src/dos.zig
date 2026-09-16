@@ -52,10 +52,10 @@ fn int21(regs: RegisterInput) RegisterOutput {
 }
 
 pub fn exit(status: u8) noreturn {
-    const func: u16 = 0x4c00;
     asm volatile ("int $0x21"
         : // No outputs
-        : [_] "{ax}" (func | status),
+        : [_] "{ah}" (@as(u8, 0x4c)),
+          [_] "{al}" (status),
     );
     unreachable;
 }
