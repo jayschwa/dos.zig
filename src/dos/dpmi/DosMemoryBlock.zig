@@ -9,7 +9,7 @@ const Segment = @import("Segment.zig");
 
 protected_mode_segment: Segment,
 real_mode_segment: u16,
-len: usize,
+len: u20,
 
 pub fn create(size: u20) !Self {
     const aligned_size = mem.alignForwardGeneric(@TypeOf(size), size, 16);

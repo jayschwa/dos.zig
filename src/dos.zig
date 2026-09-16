@@ -1,4 +1,5 @@
 const std = @import("std");
+const maxInt = std.math.maxInt;
 
 pub const dpmi = @import("dos/dpmi.zig");
 const callRealMode = dpmi.translation.callRealMode;
@@ -82,7 +83,7 @@ pub fn close(handle: fd_t) void {
 }
 
 pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
-    const len = @min(count, transfer_buffer.len);
+    const len = @min(count, transfer_buffer.len, maxInt(u16));
     const regs = int21(.{
         .eax = 0x3f00,
         .ebx = handle,
@@ -98,7 +99,7 @@ pub fn read(handle: fd_t, buf: [*]u8, count: usize) u16 {
 }
 
 pub fn write(handle: fd_t, buf: [*]const u8, count: usize) u16 {
-    const len = @min(count, transfer_buffer.len);
+    const len = @min(count, transfer_buffer.len, maxInt(u16));
     transfer_buffer.write(buf[0..len]);
     const regs = int21(.{
         .eax = 0x4000,
